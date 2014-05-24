@@ -9,6 +9,7 @@ Soon.Client = function (options) {
         port: options.port,
         nick: options.nick,
         user: options.user || options.nick,
+        ident: options.ident || options.user || options.nick,
         realname: options.realname || options.nick,
         sasl: options.sasl || false,
         password: options.password || '',
@@ -137,7 +138,7 @@ Soon.Client = function (options) {
         this.send('PASS ' + options.password);
     }
     this.send('NICK ' + options.nick);
-    this.send('USER ' + options.user + ' X X :' + options.realname);
+    this.send('USER ' + options.ident + ' X X :' + options.realname);
 };
 require('util').inherits(Soon.Client, EventEmitter);
 module.exports = Soon;
