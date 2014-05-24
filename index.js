@@ -39,7 +39,10 @@ Soon.Client = function (options) {
         self.sock.write(line + '\r\n');
     };
     this.privmsg = function (target, message) {
-        self.send('PRIVMSG ' + target + ' :' + message);
+        message = message.replace(/\r?\n|\r/g, '\n');
+        message.split('\n').forEach(function(bit) {
+        self.send('PRIVMSG ' + target + ' :' + bit);
+        });
     };
     this.notice = function(target, message) {
         self.send('NOTICE ' + target + ' :' + message);
