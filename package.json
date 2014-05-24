@@ -1,0 +1,14 @@
+{
+  "name": "soontm",
+  "version": "0.0.1",
+  "description": "The Soon (tm) IRC library, a welcome break from node-irc.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "irc"
+  ],
+  "author": "whiskers75",
+  "license": "ISC"
+}
