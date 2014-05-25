@@ -2,7 +2,37 @@ var net = require('net');
 var readline = require('readline');
 var tls = require('tls');
 var EventEmitter = require('events').EventEmitter;
-var Soon = {action: function(text) {return '\x01ACTION ' + text + '\x01';}, ctcp: function(type, text) {return '\x01' + type + ' ' + text + '\x01';}};
+var Soon = {
+    /** 
+     * Returns an action CTCP message to be passed to privmsg.
+     * @param {string} text - Text to action.
+     */
+    action: function(text) {
+        return '\x01ACTION ' + text + '\x01';
+    }, 
+    /**
+     * Returns a CTCP message.
+     * @param {string} type - Type of message (VERSION, ACTION, PING)
+     * @param {string} text - Parameters to the message.
+     */
+    ctcp: function(type, text) {
+        return '\x01' + type + ' ' + text + '\x01';
+    }
+};
+/**
+ * Create a new IRC connection.
+ * @constructor
+ * @param {object} options - Object of options.
+ * @param {string} options.host - IRC server host to connect to.
+ * @param {number} options.port - Port number to connect to.
+ * @param {boolean} options.tls - Whether to enable TLS (SSL).
+ * @param {string} options.nick - IRC nickname.
+ * @param {string=} options.user - IRC SASL username.
+ * @param {string=} options.ident - IRC 'ident' string.
+ * @param {string=} options.realname - IRC realname (gecos).
+ * @param {string=} options.password - IRC server or SASL password.
+ * @param {boolean=} options.sasl - Whether to enable SASL.
+ */
 Soon.Client = function (options) {
     options = {
         host: options.host,
@@ -16,6 +46,9 @@ Soon.Client = function (options) {
         tls: options.tls || false
     };
     if (options.tls) {
+        /**
+         * Raw IRC socket. Ideally, never use.
+         */
         this.sock = tls.connect({
             host: options.host,
             port: options.port
@@ -26,34 +59,75 @@ Soon.Client = function (options) {
         port: options.port
     });
         }
+    /**
+     * Raw readline interface. Ideally, never use.
+     */
     this.rl = readline.createInterface({
         input: this.sock,
         output: this.sock
     });
+    /**
+     * Indicates whether the client is connected.
+     */
     this.connected = false;
+    /*
+     * Object mapping nicknames to accountnames. You don't need to access this.
+     */
     this.accounts = {}; // new feature: live account tracking!
     var self = this;
+    /**
+     * Send a raw IRC line.
+     *
+     * @param {string} line - Line to send.
+     */
     this.send = function send(line) {
         line = line.replace(/\r?\n|\r/g, '');
         console.log('>>> ' + line);
         self.sock.write(line + '\r\n');
     };
+    /**
+     * Send a message.
+     *
+     * @param {string} target - Person or channel to message.
+     * @param {string} message - Message to send.
+     */
     this.privmsg = function (target, message) {
         message = message.replace(/\r?\n|\r/g, '\n');
         message.split('\n').forEach(function(bit) {
         self.send('PRIVMSG ' + target + ' :' + bit);
         });
     };
+    /**
+     * Send a NOTICE.
+     *
+     * @param {string} target - Person or channel to notice.
+     * @param {string} message - Notice to send.
+     */
     this.notice = function(target, message) {
         self.send('NOTICE ' + target + ' :' + message);
     };
+    /**
+     * Join a channel.
+     *
+     * @param {string} target - Channel to join.
+     */
     this.join = function(target) {
         self.send('JOIN ' + target);
     };
+    /**
+     * Part a channel.
+     * @param {string} target - Channel to part.
+     * @param {string=} message - Part message.
+     */
     this.part = function(target, message) {
         if (!message) message = "lazy coder has no part message";
         self.send('PART ' + target + ' :' + message);
     };
+    /**
+     * Quit and disconnect from the IRC server. (After this, you may want to exit. Reconnection isn't possible.)
+     *
+     * @param {string=} message - Quit message.
+     */
     this.quit = function(message) {
         if (!message) message = "lazy coder has no quit message";
         self.send('QUIT :' + message);
@@ -70,6 +144,17 @@ Soon.Client = function (options) {
             console.log('!!<<< Strange message recieved.');
             console.log('!!<<< ' + line);
         }
+        /**
+         * @namespace line
+         * @property {string} from - The hostmask the line comes from.
+         * @property {string} command - The IRC command or numeric.
+         * @property {array} args - Arguments to the IRC command.
+         * @property {string=} message - The IRC message.
+         * @property {nick=} nick - The IRC nickname that the command is related to.
+         * @property {ident=} ident - The ident of the IRC user that the command is related to.
+         * @property {host=} host - The host of the IRC user that the command is related to.
+         * @property {account=} account - The IRC accountname of the IRC user that the command is related to.
+         */
         line.from = line[0].replace(':', '');
         line.command = line[1];
         line.args = line.slice(2, line.length).join(' ').split(':')[0];
@@ -117,7 +202,27 @@ Soon.Client = function (options) {
             if (line.args[0] === '*') return delete self.accounts[line.nick];
             self.accounts[line.nick] = line.args[0];
         }
+        /**
+         * Message event.
+         *
+         * @event privmsg
+         * @memberof Soon.Client
+         * @property {string} nick - The nickname that said the message.
+         * @property {string} target - The target the message was said to (channel or your nick).
+         * @property {string} message - The message said.
+         * @property {object} line - The raw line data. See the line object.
+         */
         if (line.command == 'PRIVMSG' && line.nick) self.emit('privmsg', line.nick, line.args[0], line.message, line);
+        /**
+         * NOTICE event.
+         *
+         * @event notice
+         * @memberof Soon.Client
+         * @property {string} nick - The nickname that emitted the notice..
+         * @property {string} target - The target that was noticed (channel or your nick).
+         * @property {string} message - The notice.
+         * @property {object} line - The raw line data. See the line object.
+         */
         if (line.command == 'NOTICE' && line.nick) self.emit('notice', line.nick, line.args[0], line.message, line);
         if (line.command == 'JOIN' && line.nick) {
             if (line.args[1]) {
@@ -127,9 +232,27 @@ Soon.Client = function (options) {
             if (line.nick == options.nick) {
                 self.send('WHO ' + line.args[0] + ' %na');
             }
+            /**
+             * JOIN event.
+             *
+             * @event join
+             * @memberof Soon.Client
+             * @property {string} nick - The nickname that joined.
+             * @property {string} channel - The channel that was joined.
+             * @property {string=} account - The account that joined. (extended-join)
+             */
             self.emit('join', line.nick, line.args[0], line.args[1]);
         }
-        if (line.command == 'PART' && line.nick) self.emit('part', line.nick, line.args[0]);
+        /**
+         * PART event.
+         *
+         * @event part
+         * @memberof Soon.Client
+         * @property {string} nick - The nickname that parted.
+         * @property {string} channel - The channel that the user parted.
+         * @property {string=} message - The part message that was given.
+         */
+        if (line.command == 'PART' && line.nick) self.emit('part', line.nick, line.args[0], line.message);
         return this;
     });
     if (options.sasl) {
