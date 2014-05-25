@@ -215,14 +215,13 @@ Soon.Client = function (options) {
          * @property {string} target - The target the message was said to (channel or your nick).
          * @property {string} message - The message said.
          * @property {object} line - The raw line data. See the line namespace.
-         * @property {string=} ctcp - If the message is a CTCP query, the query.
+         * @property {array=} ctcp - If the message is a CTCP query, the query.
          */
         if (line.command == 'PRIVMSG' && line.nick) {
             if (line.message[0] == '\u0001' && line.message[line.message.length - 1] == '\u0001') {
-                line.ctcp = line.message.slice(1, line.message.length - 1);
-                console.log(line.ctcp);
-                if (line.ctcp == 'VERSION') {
-                    return send('NOTICE ' + line.nick + ' :\x01VERSION ' + options.version + '\x01');
+                line.ctcp = line.message.slice(1, line.message.length - 1).toLowerCase().split(' ');
+                if (line.ctcp[0] == 'version') {
+                    return self.send('NOTICE ' + line.nick + ' :\x01VERSION ' + options.version + '\x01');
                 }
             }
             self.emit('privmsg', line.nick, line.args[0], line.message, line);
