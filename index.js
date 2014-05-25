@@ -32,6 +32,8 @@ var Soon = {
  * @param {string=} options.realname - IRC realname (gecos).
  * @param {string=} options.password - IRC server or SASL password.
  * @param {boolean=} options.sasl - Whether to enable SASL.
+ * @param {string} options.version - A custom CTCP VERSION reply.
+ * @param {boolean=} options.debug - Whether to log protocol debug messages.
  */
 Soon.Client = function (options) {
     options = {
@@ -43,7 +45,9 @@ Soon.Client = function (options) {
         realname: options.realname || options.nick,
         sasl: options.sasl || false,
         password: options.password || '',
-        tls: options.tls || false
+        tls: options.tls || false,
+        version: options.version || 'soontm irc library by whiskers75',
+        debug: options.debug || false
     };
     if (options.tls) {
         /**
@@ -82,7 +86,7 @@ Soon.Client = function (options) {
      */
     this.send = function send(line) {
         line = line.replace(/\r?\n|\r/g, '');
-        console.log('>>> ' + line);
+        if (options.debug) console.log('>>> ' + line);
         self.sock.write(line + '\r\n');
     };
     /**
@@ -173,7 +177,7 @@ Soon.Client = function (options) {
                 line.account = self.accounts[line.nick];
             }
         }
-        console.log('<<< ' + line.command + ' from ' + line.from + ': ' + line.message + ' (args: ' + line.args.join(', ') + ')');
+        if (options.debug) console.log('<<< ' + line.command + ' from ' + line.from + ': ' + line.message + ' (args: ' + line.args.join(', ') + ')');
         if (line.command == '001') {
             self.emit('registered');
             self.connected = true;
@@ -210,9 +214,19 @@ Soon.Client = function (options) {
          * @property {string} nick - The nickname that said the message.
          * @property {string} target - The target the message was said to (channel or your nick).
          * @property {string} message - The message said.
-         * @property {object} line - The raw line data. See the line object.
+         * @property {object} line - The raw line data. See the line namespace.
+         * @property {string=} ctcp - If the message is a CTCP query, the query.
          */
-        if (line.command == 'PRIVMSG' && line.nick) self.emit('privmsg', line.nick, line.args[0], line.message, line);
+        if (line.command == 'PRIVMSG' && line.nick) {
+            if (line.message[0] == '\u0001' && line.message[line.message.length - 1] == '\u0001') {
+                line.ctcp = line.message.slice(1, line.message.length - 1);
+                console.log(line.ctcp);
+                if (line.ctcp == 'VERSION') {
+                    return send('NOTICE ' + line.nick + ' :\x01VERSION ' + options.version + '\x01');
+                }
+            }
+            self.emit('privmsg', line.nick, line.args[0], line.message, line);
+        }
         /**
          * NOTICE event.
          *
@@ -221,7 +235,7 @@ Soon.Client = function (options) {
          * @property {string} nick - The nickname that emitted the notice..
          * @property {string} target - The target that was noticed (channel or your nick).
          * @property {string} message - The notice.
-         * @property {object} line - The raw line data. See the line object.
+         * @property {object} line - The raw line data. See the line namespace.
          */
         if (line.command == 'NOTICE' && line.nick) self.emit('notice', line.nick, line.args[0], line.message, line);
         if (line.command == 'JOIN' && line.nick) {
@@ -240,8 +254,9 @@ Soon.Client = function (options) {
              * @property {string} nick - The nickname that joined.
              * @property {string} channel - The channel that was joined.
              * @property {string=} account - The account that joined. (extended-join)
+             * @property {string=} gecos - The realname (gecos) of the user that joined (extended-join)
              */
-            self.emit('join', line.nick, line.args[0], line.args[1]);
+            self.emit('join', line.nick, line.args[0], line.args[1], line.message);
         }
         /**
          * PART event.
