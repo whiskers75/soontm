@@ -193,7 +193,7 @@ Soon.Client = function (options) {
             self.send('CAP END');
         }
         if (line.command == '903') {
-            console.log('<<< SASL successful!');
+            if (options.debug) console.log('<<< SASL successful!');
             self.send('CAP END');
         }
         if (line.command == '354') {
@@ -254,8 +254,9 @@ Soon.Client = function (options) {
              * @property {string} channel - The channel that was joined.
              * @property {string=} account - The account that joined. (extended-join)
              * @property {string=} gecos - The realname (gecos) of the user that joined (extended-join)
+             * @property {object} line - The raw line data. See the line namespace.
              */
-            self.emit('join', line.nick, line.args[0], line.args[1], line.message);
+            self.emit('join', line.nick, line.args[0], line.args[1], line.message, line);
         }
         /**
          * PART event.
@@ -265,8 +266,27 @@ Soon.Client = function (options) {
          * @property {string} nick - The nickname that parted.
          * @property {string} channel - The channel that the user parted.
          * @property {string=} message - The part message that was given.
+         * @property {object} line - The raw line data. See the line namespace.
          */
-        if (line.command == 'PART' && line.nick) self.emit('part', line.nick, line.args[0], line.message);
+        if (line.command == 'PART' && line.nick) self.emit('part', line.nick, line.args[0], line.message, line);
+        /**
+         * Invite event. Emitted when the client recieves an /invite.
+         *
+         * @event invite
+         * @memberof Soon.Client
+         * @property {string} nick - The nickname which is inviting you.
+         * @property {string} channel - The channel you are being invited to.
+         * @property {object} line - The raw line data. See the line namespace.
+         */
+        if (line.command == 'INVITE') self.emit('invite', line.nick, line.message, line);
+        /**
+         * Raw event. Emitted on every properly-formatted IRC line.
+         *
+         * @event raw
+         * @memberof Soon.Client
+         * @property {object} line - The raw line data. See the line namespace.
+         */
+        self.emit('raw', line);
         return this;
     });
     if (options.sasl) {
