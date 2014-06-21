@@ -201,7 +201,7 @@ Soon.Client = function (options) {
                 line.account = self.accounts[line.nick];
             }
         }
-        if (options.debug) console.log('<<< ' + line.command + ' from ' + line.prefix + ': ' + line.args.join(', '));
+        if (options.debug) console.log('<<< ' + line.command + ' from ' + line.prefix + ': ' + require('util').inspect(line.args));
         if (line.command === '001') {
             self.emit('registered');
             self.connected = true;
@@ -232,10 +232,10 @@ Soon.Client = function (options) {
             self.accounts[line.nick] = line.args[0];
         }
         if (line.command === 'PING') {
-            return self.send('PONG ' + line.args[0]);
+            self.send('PONG ' + line.args[0]);
         }
         if (line.command === 'AUTHENTICATE' && line.args[0] === '+') {
-            return self.send('AUTHENTICATE ' + new Buffer(options.user + '\0' + options.user + '\0' + options.password).toString('base64'));
+            self.send('AUTHENTICATE ' + new Buffer(options.user + '\0' + options.user + '\0' + options.password).toString('base64'));
         }
         /**
          * Message event.
