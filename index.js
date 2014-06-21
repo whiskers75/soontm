@@ -40,6 +40,7 @@ var Soon = {
  * @param {string} options.version - A custom CTCP VERSION reply.
  * @param {boolean=} options.debug - Whether to log protocol debug messages.
  * @param {array=} options.channels - Array of channels to autojoin.
+ * @param {boolean=} options.sloppy - Whether to care about security.
  */
 Soon.Client = function (options) {
     options = {
@@ -54,7 +55,8 @@ Soon.Client = function (options) {
         tls: options.tls || false,
         version: options.version || 'soontm irc library by whiskers75',
         debug: options.debug || false,
-        channels: options.channels || []
+        channels: options.channels || [],
+        sloppy: options.sloppy || false
     };
     if (options.tls) {
         /**
@@ -348,11 +350,11 @@ Soon.Client = function (options) {
         return this;
     });
     if (options.sasl) {
-        if (!options.tls) self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
+        if (!options.tls && !options.sloppy) self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
         self.send('CAP REQ :sasl');
     }
     else if (options.password) {
-        if (!options.tls) self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
+        if (!options.tls && !options.sloppy) self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
         this.send('PASS ' + options.password);
     }
     this.send('NICK ' + options.nick);
