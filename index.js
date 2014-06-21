@@ -279,8 +279,12 @@ Soon.Client = function (options) {
         }
         if (line.command === 'JOIN' && line.nick) {
             if (line.args[1]) {
-                if (line.args[1] === '*') return delete self.accounts[line.nick];
+                if (line.args[1] === '*') {
+                    delete self.accounts[line.nick];
+                }
+                else {
                 self.accounts[line.nick] = line.args[1];
+                }
             }
             if (line.nick === options.nick) {
                 self.send('WHO ' + line.args[0] + ' %na');
