@@ -328,7 +328,7 @@ Soon.Client = function (options) {
          * @property {string} channel - The channel of which you're getting a topic for
          * @property {string} topic - The topic itself.
          */
-        if (line.command === '332') self.emit('topic', line.args[0], line.args[1]);
+        if (line.command === '332') self.emit('topic', line.args[1], line.args[2]);
         /**
          * Raw event. Emitted on every properly-formatted IRC line.
          * Replace "???" with the IRC command or numeric.
