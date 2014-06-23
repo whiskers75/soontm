@@ -104,7 +104,7 @@ Soon.Client = function (options) {
      */
     this.send = function send(line) {
         line = line.replace(/\r?\n|\r/g, '');
-        if (options.debug) console.log('>>> ' + line);
+        if (options.debug) console.log('<<< ' + line);
         self.sock.write(line + '\r\n');
     };
     /**
@@ -159,8 +159,8 @@ Soon.Client = function (options) {
      */
     this.raw = new EventEmitter();
     // IRC parser bit
-    this.rl.on('line', function (line) {
-        line = {tokens: String(line).split(' ')};
+    this.rl.on('line', function (_line) {
+        line = {tokens: String(_line).split(' ')};
 
         if (line.tokens[0][0] === ':') {
             line.prefix = line.tokens[0].replace(':', '');
@@ -203,7 +203,7 @@ Soon.Client = function (options) {
                 line.account = self.accounts[line.nick];
             }
         }
-        if (options.debug) console.log('<<< ' + line.command + ' from ' + line.prefix + ': ' + require('util').inspect(line.args));
+        if (options.debug) console.log('>>> ' + _line);
         if (line.command === '001') {
             self.emit('registered');
             self.connected = true;
@@ -220,7 +220,7 @@ Soon.Client = function (options) {
             self.send('CAP END');
         }
         if (line.command === '903') {
-            if (options.debug) console.log('<<< SASL successful!');
+            if (options.debug) console.log('SASL successful!');
             self.send('CAP END');
         }
         if (line.command === '354') {
