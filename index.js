@@ -160,7 +160,7 @@ Soon.Client = function (options) {
     this.raw = new EventEmitter();
     // IRC parser bit
     this.rl.on('line', function (_line) {
-        line = {tokens: String(_line).split(' ')};
+        var line = {tokens: String(_line).split(' ')};
 
         if (line.tokens[0][0] === ':') {
             line.prefix = line.tokens[0].replace(':', '');
