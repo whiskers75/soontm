@@ -360,5 +360,12 @@ Soon.Client = function (options) {
     this.send('NICK ' + options.nick);
     this.send('USER ' + options.ident + ' X X :' + options.realname);
 };
+// cf. http://tools.ietf.org/html/rfc2812#section-2.2
+Soon.toLowerCase = function (string) {
+    return string.toLowerCase().replace(/\[/g, '{')
+                               .replace(/\]/g, '}')
+                               .replace(/\\/g, '|')
+                               .replace(/~/g, '^');
+} 
 require('util').inherits(Soon.Client, EventEmitter);
 module.exports = Soon;
