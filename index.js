@@ -142,7 +142,7 @@ Soon.Client = function (options) {
      * @param {string=} message - Part message.
      */
     this.part = function(target, message) {
-        if (!message) message = "lazy coder has no part message";
+        if (!message) message = "";
         self.send('PART ' + target + ' :' + message);
     };
     /**
@@ -151,7 +151,7 @@ Soon.Client = function (options) {
      * @param {string=} message - Quit message.
      */
     this.quit = function(message) {
-        if (!message) message = "lazy coder has no quit message";
+        if (!message) message = "";
         self.send('QUIT :' + message);
     };
     /**
