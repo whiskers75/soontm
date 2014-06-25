@@ -236,6 +236,10 @@ Soon.Client = function (options) {
         if (line.command === 'PING') {
             self.send('PONG ' + line.args[0]);
         }
+        if (line.command === 'ERROR') {
+            console.log('Error from server: ' + line.args.join(' '));
+            process.exit(1);
+        }
         if (line.command === 'AUTHENTICATE' && line.args[0] === '+') {
             self.send('AUTHENTICATE ' + new Buffer(options.user + '\0' + options.user + '\0' + options.password).toString('base64'));
         }
