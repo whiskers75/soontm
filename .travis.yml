@@ -9,3 +9,7 @@ deploy:
     secure: kiK7TOyIFyqoBSIJ1/C3boiBiamVZ++hHAWxdl7Bx26vnMnfequEy4d5t5O3TiLUXWZmv8sY2K6V9i1ZLvWT2bDqxCmePRDJzlCqi/E9HGgsUSAxEndeofY4lrvycR+ZUCbemhr5C5ce81jPHkfX/6W0Fi2+3UylnxMEIUAs72U=
   on:
     repo: whiskers75/soontm
+    branch: master
+    node: '0.11'
+notifications:
+  irc: "chat.freenode.net#soontm"
