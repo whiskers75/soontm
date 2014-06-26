@@ -205,6 +205,12 @@ Soon.Client = function (options) {
         }
         if (options.debug) console.log('>>> ' + _line);
         if (line.command === '001') {
+            /**
+             * Event emitted when the client connects.
+             *
+             * @memberof Soon.Client
+             * @event registered
+             */
             self.emit('registered');
             self.connected = true;
             self.send('CAP REQ :extended-join account-notify');
@@ -234,7 +240,7 @@ Soon.Client = function (options) {
             self.accounts[line.nick] = line.args[0];
         }
         if (line.command === 'PING') {
-            self.send('PONG ' + line.args[0]);
+            self.send(String('PONG ' + line.tokens.join(' ')));
         }
         if (line.command === 'ERROR') {
             console.log('Error from server: ' + line.args.join(' '));
@@ -255,6 +261,7 @@ Soon.Client = function (options) {
          * @property {array=} line.ctcp - If the message is a CTCP query, the query.
          */
         if (line.command === 'PRIVMSG' && line.nick) {
+
             if (line.args[1][0] === '\u0001' && line.args[1][line.args[1].length - 1] === '\u0001') {
                 line.ctcp = line.args[1].slice(1, line.args[1].length - 1).split(' ');
                 if (line.ctcp[0].toLowerCase() === 'version') {
@@ -319,6 +326,16 @@ Soon.Client = function (options) {
          * @property {object} line - The raw line data. See the line namespace.
          */
         if (line.command === 'PART' && line.nick) self.emit('part', line.nick, line.args[0], line.args[1], line);
+        /**
+         * QUIT event. Emitted when a user leaves IRC.
+         *
+         * @event quit
+         * @memberof Soon.Client
+         * @property {string} nick - The nickname that left.
+         * @property {string} message - The quit message that was given.
+         * @property {object} line - The raw line data. See the line namespace.
+         */
+        if (line.command === 'QUIT' && line.nick) self.emit('quit', line.nick, line.args[0], line);
         /**
          * Invite event. Emitted when the client recieves an /invite.
          *

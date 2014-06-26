@@ -4,11 +4,14 @@
   "description": "The Soon (tm) IRC library, a welcome break from node-irc. Plus, it has no dependencies!",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"No tests yet, I'm afraid!\" && exit 1"
+    "test": "mocha -R spec test.js"
   },
   "keywords": [
     "irc"
   ],
   "author": "whiskers75",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+      "mocha": "*"
+  }
 }
