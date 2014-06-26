@@ -1,6 +1,6 @@
 {
   "name": "soontm",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "The Soon (tm) IRC library, a welcome break from node-irc. Plus, it has no dependencies!",
   "main": "index.js",
   "scripts": {
