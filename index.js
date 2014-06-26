@@ -355,7 +355,7 @@ Soon.Client = function (options) {
          * @property {string} channel - The channel of which you're getting a topic for
          * @property {string} topic - The topic itself.
          */
-        if (line.command === '332') self.emit('topic', line.args[1], line.args[2]);
+        if (line.command === '332') self.emit('rpl_topic', line.args[1], line.args[2]);
         /**
          * Raw event. Emitted on every properly-formatted IRC line.
          * Replace "???" with the IRC command or numeric.
@@ -387,6 +387,6 @@ Soon.toLowerCase = function (string) {
                                .replace(/\]/g, '}')
                                .replace(/\\/g, '|')
                                .replace(/~/g, '^');
-} 
+};
 require('util').inherits(Soon.Client, EventEmitter);
 module.exports = Soon;
