@@ -1,5 +1,5 @@
 var Soon = require('./index.js');
-var client = new Soon.Client({});
+var client = new Soon.Client({host: 'test.net', port: 6667, nick: 'testing'});
 client.send = function() {};
 it('should emit registered on 001', function(done) {
     client.once('registered', done);
