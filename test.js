@@ -150,3 +150,19 @@ it('should emit wallops when receiving a WALLOPS', function(done) {
     });
     client.rl.emit('line', ':testing!~test@testing/test WALLOPS :Test /wallops');
 });
+it('should emit rpl_mononline on 730', function(done) {
+    client.once('rpl_mononline', function (nick, username, host) {
+        if (nick != 'testing') return done(new Error('failed to parse nick'));
+        if (username != '~test') return done(new Error('failed to parse username'));
+        if (host != 'testing/test') return done(new Error('failed to parse host'));
+        done();
+    });
+    client.rl.emit('line', ':test.net 730 testing :testing!~test@testing/test');
+});
+it('should emit rpl_monoffline on 731', function(done) {
+    client.once('rpl_monoffline', function (nick) {
+        if (nick != 'testing') return done(new Error('failed to parse nick'));
+        done();
+    });
+    client.rl.emit('line', ':test.net 731 testing :testing');
+});
