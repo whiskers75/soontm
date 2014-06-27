@@ -129,7 +129,7 @@ Soon.Server = function (options) {
          * @param {string=} message - Optional kill message.
          */
         this.kill = function(uid, message) {
-            selfserv.send('KILL ' + uid + ' :Killed (' + (message || 'Disconnected by services') + ')');
+            selfserv.send('KILL ' + uid + ' :Killed (' + (message || '<No reason given>') + ')');
         };
     };
     /**
