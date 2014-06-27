@@ -349,7 +349,7 @@ Soon.Client = function (options) {
         /**
          * RPL_TOPIC - emitted when the client recieves a topic reply.
          *
-         * @event topic
+         * @event rpl_topic
          * @memberof Soon.Client
          * @since 0.2.0
          * @property {string} channel - The channel of which you're getting a topic for
