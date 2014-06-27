@@ -7,9 +7,9 @@ var net = require('net'),
 readline = require('readline'),
 EventEmitter = require('events').EventEmitter;
 
-var Soon = {};
+var SoonTS6 = {};
 /**
- * Create a new server link.
+ * Create a new fake services server and link it to another real server.
  *
  * @constructor
  * @param {object} options - Object of options.
@@ -19,7 +19,7 @@ var Soon = {};
  * @param {string} options.sname - Server name to use
  * @param {string} options.pass - Server linking password
  */
-Soon.Server = function (options) {
+SoonTS6.Server = function (options) {
     options = {
         host: options.host,
         port: options.port,
@@ -38,17 +38,47 @@ Soon.Server = function (options) {
         output: this.sock
     });
     /**
-     * Object mapping S/EIDs to names
+     * Constructor for IRC objects (users or servers).
+     *
+     * @constructor
+     * @param {string} id - UID or SID of the object.
+     * @param {string} name - The object's human-readable name.
+     * @param {number=} ts - The object's timestamp.
+     * @param {array=} modes - The object's modes (for a user).
+     * @param {string=} host - The object's hostname.
+     * @param {string=} ident - The object's ident or user portion.
+     * @param {string=} desc - The server description or gecos.
      */
-    this.ids = {};
+    this.IRCObj = function(id, name, ts, modes, ident, host, desc) {
+        console.log(id, name, ts, modes, ident, host, desc);
+        this.id = String(id) || '99XAAAAAA';
+        this.name = String(name) || 'unidentified irc object';
+        this.ts = Number(ts) || 0;
+        this.modes = modes || [];
+        this.ident = String(ident) || '';
+        this.host = String(host) || '';
+        this.desc = String(desc) || '';
+        this.toString = function() {return name;};
+        return this;
+    };
     /**
-     * Object mapping users to UIDs.
+     * Array storing IRCObjs.
      */
-    this.users = {};
+    this.objs = [];
     /**
-     * Object containing UIDs and their nickTSs.
+     * Find an IRCObj by a certain attribute (like name, id...).
+     *
+     * @param {string} attr - The attribute to check.
+     * @param {string} val - The wanted value of the attribute to check.
+     * @returns {object} - a Server.IRCObj (or undefined if there is no such object)
      */
-    this.tslist = {};
+    this.objs.findByAttr = function(attr, val) {
+        var ircobj;
+        self.objs.forEach(function(obj) {
+            if (obj[attr] == val) ircobj = obj;
+        });
+        return ircobj;
+    };
     this.theirid = ''; // their SID
     this.curid = 0;
     /**
@@ -73,10 +103,9 @@ Soon.Server = function (options) {
         self.send('SQUIT ' + this.theirname);
     };
     /**
-     * Service constructor. Created on mkserv();
+     * Service constructor. Server.mkserv() does this for you, so usually there's no need to directly call this.
      *
      * @constructor
-     * @private
      * @param {string} id - UID
      */
     this.Service = function(id) {
@@ -144,7 +173,7 @@ Soon.Server = function (options) {
     this.mkserv = function(name, ident, host, gecos) {
         self.curid++;
         var id = zPad(Number(self.curid), 6);
-        self.ids[options.sid + id] = name;
+        self.objs.push(new this.IRCObj(options.sid + id, name, (Date.now() / 100).toFixed(0), ['S', 'i', 'o'], host, ident, (gecos || name)))
         self.send('EUID ' + name + ' 1 ' + (Date.now() / 100).toFixed(0) + ' +Sio ' + host + ' ' + ident + ' 0 ' + options.sid + id + ' * * :' + (gecos || name));
         return new self.Service(options.sid + id);
     };
@@ -182,7 +211,7 @@ Soon.Server = function (options) {
          * @property {array} args - Arguments to the TS6 command.
          * @property {string} name - The human-readable name.
          */
-        line.name = self.ids[line.id];
+        line.name = self.objs.findByAttr('id', line.id);
         console.log('>> :' + line.id + ' (' + line.name + ') ' + line.command + ' ' + line.args.join(' '));
         if (line.command === 'PING' && line.args[1] === options.sid) {
             self.send('PONG ' + line.args[0] + ' :' + line.args[1]);
@@ -191,36 +220,36 @@ Soon.Server = function (options) {
             self.theirid = line.args[3];
         }
         if (line.command === 'SERVER' && line.id === self.theirid) {
-            self.ids[self.theirid] = line.args[0];
+            self.objs.push(new self.IRCObj(line.id, line.args[0], false, false, false, line.args[0]));
         }
         if (line.command === 'SID') {
-            self.ids[line.args[2]] = line.args[0];
+            self.objs.push(new self.IRCObj(line.args[2], line.args[0], false, false, false, false, line.args[3]));
         }
         if (line.command === 'EUID') {
-            self.ids[line.args[7]] = line.args[4];
-            self.users[line.args[4]] = line.args[7];
-            self.tslist[line.args[7]] = line.args[2];
+            self.objs.push(new self.IRCObj(line.args[7], line.args[0], line.args[2], line.args[3].replace('+', '').split(''), line.args[7], line.args[4], line.args[10]));
+        }
+        if (line.command === 'SJOIN') {
+            self.objs.push(new self.IRCObj(line.args[1], line.args[1], line.args[0], line.args[2].replace('+', '').split('')));
         }
         if (line.command === 'PRIVMSG') {
             /**
              * PRIVMSG event. Emitted when the server recieves information about a private message.
              *
-             * @event 'privmsg'
-             * @memberof Soon.Server
-             * @param {string} name - The name (server/user) that said the message.
-             * @param {string} id - The UID or SID of the person that said the message.
-             * @param {string} target - The name (channel/user) where the message was said.
-             * @param {string=} toid - The UID of the person to whom the message was said, if a user.
+             * @event privmsg
+             * @memberof SoonTS6.Server
+             * @param {object} from - The IRCObj that said the message.
+             * @param {object} target - The IRCObj that the message was said to.
              * @param {string} message - The message!
              */
-            var name = self.ids[line.id];
+            var from = self.objs.findByAttr('id', line.id);
             var target = line.args[0];
-            var toid = '';
             if (target[0] != '#') {
-                toid = target;
-                target = self.ids[target];
+                target = self.objs.findByAttr('id', target);
             }
-            self.emit('privmsg', name, line.id, target, toid, line.args[1]);
+            else {
+                target = self.objs.findByAttr('name', target);
+            }
+            self.emit('privmsg', from, target, line.args[1]);
         }
         return;
     });
@@ -228,6 +257,6 @@ Soon.Server = function (options) {
     this.send('CAPAB :ENCAP SERVICES EUID RSFNC'); // TODO: KLN UNKLN EOPMOD EX IE QS
     this.send('SERVER ' + options.sname + ' 1 :' + options.sname);
 };
-require('util').inherits(Soon.Server, EventEmitter);
-module.exports = Soon;
+require('util').inherits(SoonTS6.Server, EventEmitter);
+module.exports = SoonTS6;
 
