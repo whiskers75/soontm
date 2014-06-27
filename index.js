@@ -367,6 +367,34 @@ Soon.Client = function (options) {
          */
         if (line.command === 'WALLOPS') self.emit('wallops', line.nick, line.args[0], line);
         /**
+         * RPL_MONONLINE - emitted when the client receives the 730 numeric
+         *
+         * @event rpl_mononline
+         * @memberof Soon.Client
+         * @property {string} nick - The nickname that became online.
+         * @property {string} username - The username of the user that became online.
+         * @property {string} host - The hostname of the user that became online.
+         * @property {object} line - The raw line data. See the line namespace.
+         */
+        if (line.command === '730') {
+            line.args[1].split(',').forEach(function (target) {
+                self.emit('rpl_mononline', target.split('@')[0].split('!')[0], target.split('@')[0].split('!')[1], target.split('@')[1], line);
+            });
+        }
+        /**
+         * RPL_MONOFFLINE - emitted when the client receives the 731 numeric
+         *
+         * @event rpl_monoffiline
+         * @memberof Soon.Client
+         * @property {string} nick - The nickname that left the IRC network.
+         * @property {object} line - The raw line data. See the line namespace.
+         */
+        if (line.command === '731') {
+            line.args[1].split(',').forEach(function (target) {
+                self.emit('rpl_monoffline', target, line);
+            });
+        }
+        /**
          * Raw event. Emitted on every properly-formatted IRC line.
          * Replace "???" with the IRC command or numeric.
          *
