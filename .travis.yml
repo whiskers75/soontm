@@ -14,3 +14,4 @@ deploy:
     node: '0.11'
 notifications:
   email: false
+  webhooks: http://n.tkte.ch/h/2827/WiKh1taQ4lizYDKEJ7J298Bd
