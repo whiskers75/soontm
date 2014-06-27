@@ -142,3 +142,11 @@ it('should send the correct message on .quit()', function(done) {
     };
     client.quit('goodbye world');
 });
+it('should emit wallops when receiving a WALLOPS', function(done) {
+    client.once('wallops', function(nick, message) {
+        if (nick != 'testing') return done(new Error('failed to parse nick'));
+        if (message != 'Test /wallops') return done(new Error('failed to parse message'));
+        done();
+    });
+    client.rl.emit('line', ':testing!~test@testing/test WALLOPS :Test /wallops');
+});

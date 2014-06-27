@@ -357,6 +357,16 @@ Soon.Client = function (options) {
          */
         if (line.command === '332') self.emit('rpl_topic', line.args[1], line.args[2]);
         /**
+         * WALLOPS - emitted when a wallops is received.
+         *
+         * @event wallops
+         * @memberof Soon.Client
+         * @property {string} nick - The nickname that sent the wallops.
+         * @property {string} message - The wallops that was sent.
+         * @property {object} line - The raw line data. See the line namespace.
+         */
+        if (line.command === 'WALLOPS') self.emit('wallops', line.nick, line.args[0], line);
+        /**
          * Raw event. Emitted on every properly-formatted IRC line.
          * Replace "???" with the IRC command or numeric.
          *
