@@ -13,4 +13,4 @@ deploy:
     all_branches: true
     node: '0.11'
 notifications:
-  irc: "chat.freenode.net#soontm"
+  email: false
