@@ -56,7 +56,8 @@ Soon.Client = function (options) {
         version: options.version || 'soontm irc library by whiskers75',
         debug: options.debug || false,
         channels: options.channels || [],
-        sloppy: options.sloppy || false
+        sloppy: options.sloppy || false,
+        awaynotify: options.awaynotify || false
     };
     if (options.tls) {
         /**
@@ -94,6 +95,7 @@ Soon.Client = function (options) {
      * bot.accounts["^whiskers75"] // "whiskers75"
      */
     this.accounts = {};
+    if (options.awaynotify) this.awaystatus = {};
     var self = this;
     /**
      * Send a raw IRC line.
@@ -194,6 +196,7 @@ Soon.Client = function (options) {
          * @property {ident=} ident - The ident of the IRC user that the command is related to.
          * @property {host=} host - The host of the IRC user that the command is related to.
          * @property {account=} account - The IRC accountname of the IRC user that the command is related to.
+         * @property {status=} status - The status (away/here) of the IRC user that the command is related to. (H = here; G = gone)
          */
         if (line.prefix.indexOf('@') != -1) {
             line.nick = line.prefix.split('@')[0].split('!')[0];
@@ -201,6 +204,9 @@ Soon.Client = function (options) {
             line.host = line.prefix.split('@')[1];
             if (self.accounts[line.nick]) {
                 line.account = self.accounts[line.nick];
+            }
+            if (self.awaystatus[line.nick]) {
+                line.status = self.awaystatus[line.nick];
             }
         }
         if (options.debug) console.log('>>> ' + _line);
@@ -213,7 +219,11 @@ Soon.Client = function (options) {
              */
             self.emit('registered');
             self.connected = true;
-            self.send('CAP REQ :extended-join account-notify');
+            if (options.awaynotify) {
+                self.send('CAP REQ :extended-join account-notify away-notify');
+            } else {
+                self.send('CAP REQ :extended-join account-notify');
+            }
             if (options.channels) options.channels.forEach(self.join);
         }
         if (line.command === 'CAP') {
@@ -230,14 +240,29 @@ Soon.Client = function (options) {
             self.send('CAP END');
         }
         if (line.command === '354') {
-            // a WHOX reply, we're assuming it's %na
-            if (line.args[2] === '0') return delete self.accounts[line.args[1]];
-            self.accounts[line.args[1]] = line.args[2];
+            if (options.awaynotify) {
+                // a WHOX reply, we're assuming it's %nfa
+                self.awaystatus[line.args[1]] = line.args[2].split('')[0];
+                if (line.args[3] === '0') return delete self.accounts[line.args[1]];
+                self.accounts[line.args[1]] = line.args[3];
+            } else {
+                // a WHOX reply, we're assuming it's %na
+                if (line.args[2] === '0') return delete self.accounts[line.args[1]];
+                self.accounts[line.args[1]] = line.args[2];
+            }
         }
         if (line.command === "ACCOUNT") {
             // account-notify CAP extension
             if (line.args[0] === '*') return delete self.accounts[line.nick];
             self.accounts[line.nick] = line.args[0];
+        }
+        if (line.command === "AWAY") {
+            // away-notify CAP extension
+            if (line.args[0]) {
+                self.awaystatus[line.nick] = 'G';
+            } else {
+                self.awaystatus[line.nick] = 'H';
+            }
         }
         if (line.command === 'PING') {
             self.send(String('PONG ' + line.tokens.join(' ')));
@@ -300,7 +325,11 @@ Soon.Client = function (options) {
                 }
             }
             if (line.nick === options.nick) {
-                self.send('WHO ' + line.args[0] + ' %na');
+                if (options.awaynotify) {
+                    self.send('WHO ' + line.args[0] + ' %nfa');
+                } else {
+                    self.send('WHO ' + line.args[0] + ' %na');
+                }
             }
             /**
              * JOIN event.
