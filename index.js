@@ -205,7 +205,7 @@ Soon.Client = function (options) {
             if (self.accounts[line.nick]) {
                 line.account = self.accounts[line.nick];
             }
-            if (self.awaystatus[line.nick]) {
+            if (options.awaynotify && self.awaystatus[line.nick]) {
                 line.status = self.awaystatus[line.nick];
             }
         }
