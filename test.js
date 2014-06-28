@@ -1,6 +1,8 @@
 var Soon = require('./index.js');
-var client = new Soon.Client({host: 'test.net', port: 6667, nick: 'testing', awaynotify: true});
+var client = new Soon.Client({host: 'test.net', port: 6667, nick: 'testing'});
 client.send = function() {};
+client.rl.emit('line', ':test.net CAP * LS :account-notify away-notify extended-join multi-prefix sasl tls');
+client.rl.emit('line', ':test.net CAP * ACK :account-notify away-notify extended-join');
 it('should emit registered on 001', function(done) {
     client.once('registered', done);
     client.rl.emit('line', ':test.net 001 testing :Testing\r\n');
