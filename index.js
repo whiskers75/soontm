@@ -99,6 +99,10 @@ Soon.Client = function (options) {
      * Indicates whether away notify is enabled.
      */
     this.awaynotify = false;
+    /*
+     * List of capabilities to request.
+     */
+    this.capabilities = '';
     var self = this;
     /**
      * Send a raw IRC line.
@@ -227,11 +231,19 @@ Soon.Client = function (options) {
         if (line.command === 'CAP') {
             if (line.args[1] === 'LS') {
                 if (line.args[2].indexOf('away-notify') != -1) {
-                    self.send('CAP REQ :away-notify');
+                    self.capabilities += 'away-notify ';
                 }
                 if (line.args[2].indexOf('account-notify') != -1 && line.args[2].indexOf('extended-join') != -1) {
-                    self.send('CAP REQ :extended-join account-notify');
+                    self.capabilities += 'extended-join account-notify ';
                 }
+                if (line.args[2].indexOf('multi-prefix') != -1) {
+                    self.capabilities += 'multi-prefix ';
+                }
+                if (options.sasl && options.password && line.args[2].indexOf('sasl') != -1) {
+                    if (!options.tls && !options.sloppy) self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
+                    self.capabilities += 'sasl ';
+                }
+                self.send('CAP REQ :' + self.capabilities);
             }
             if (line.args[1] === 'ACK') {
                 if (line.args[2].indexOf('sasl') != -1) {
@@ -462,11 +474,7 @@ Soon.Client = function (options) {
         self.raw.emit(line.command, line);
         return this;
     });
-    if (options.sasl) {
-        if (!options.tls && !options.sloppy) self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
-        self.send('CAP REQ :sasl');
-    }
-    else if (options.password) {
+    if (!options.sasl && options.password) {
         if (!options.tls && !options.sloppy) self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
         this.send('PASS ' + options.password);
     }
