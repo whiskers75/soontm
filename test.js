@@ -166,3 +166,20 @@ it('should emit rpl_monoffline on 731', function(done) {
     });
     client.rl.emit('line', ':test.net 731 testing :testing');
 });
+it('should emit topic on TOPIC', function(done) {
+    client.once('topic', function (nick, channel, topic) {
+        if (nick != 'testing') return done(new Error('failed to parse nick'));
+        if (channel != '#testchan') return done(new Error('failed to parse channel'));
+        if (topic != 'test /topic') return done(new Error('failed to parse topic'));
+        done();
+    });
+    client.rl.emit('line', ':testing!~test@testing/test TOPIC #testchan :test /topic');
+});
+it('should emit rpl_topic on 332', function(done) {
+    client.once('rpl_topic', function (channel, topic) {
+        if (channel != '#testchan') return done(new Error('failed to parse channel'));
+        if (topic != 'test /topic') return done(new Error('failed to parse topic'));
+        done();
+    });
+    client.rl.emit('line', ':test.net 332 testing #testchan :test /topic');
+});

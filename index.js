@@ -357,6 +357,16 @@ Soon.Client = function (options) {
          */
         if (line.command === '332') self.emit('rpl_topic', line.args[1], line.args[2]);
         /**
+         * TOPIC - emitted when the client receives a topic change.
+         *
+         * @event topic
+         * @memberof Soon.Client
+         * @property {string} nick - The nickname that changed the topic.
+         * @property {string} channel - The channel where the topic is changed.
+         * @property {string} topic - The topic itself.
+         */
+        if (line.command === "TOPIC") self.emit('topic', line.nick, line.args[0], line.args[1]);
+        /**
          * WALLOPS - emitted when a wallops is received.
          *
          * @event wallops
