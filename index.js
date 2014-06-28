@@ -95,6 +95,9 @@ Soon.Client = function (options) {
      */
     this.accounts = {};
     this.awaystatus = {};
+    /*
+     * Indicates whether away notify is enabled.
+     */
     this.awaynotify = false;
     var self = this;
     /**
