@@ -1,5 +1,5 @@
 var Soon = require('./index.js');
-var client = new Soon.Client({host: 'test.net', port: 6667, nick: 'testing'});
+var client = new Soon.Client({host: 'test.net', port: 6667, nick: 'testing', sasl: true, user: 'testing', password: 'testing', sloppy: true});
 client.send = function() {};
 client.rl.emit('line', ':test.net CAP * LS :account-notify away-notify extended-join multi-prefix sasl tls');
 client.rl.emit('line', ':test.net CAP * ACK :account-notify away-notify extended-join multi-prefix');
@@ -216,4 +216,12 @@ it('should set away status to G when receiving AWAY with message', function(done
     });
     client.rl.emit('line', ':gone!~test@testing/test AWAY :gone');
     client.rl.emit('line', ':gone!~test@testing/test PRIVMSG #testchan :testing is great!');
+});
+it('should send corrent AUTHENTICATE command when receiving \'AUTHENTICATE +\'', function(done) {
+    client.send = function(msg) {
+        if (msg != 'AUTHENTICATE dGVzdGluZwB0ZXN0aW5nAHRlc3Rpbmc=') return done(new Error('failed to reply exactly (got ' + msg + ')'));
+        done();
+        client.send = function() {};
+    }
+    client.rl.emit('line', 'AUTHENTICATE +');
 });
