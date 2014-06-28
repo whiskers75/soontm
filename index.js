@@ -94,6 +94,8 @@ Soon.Client = function (options) {
      * bot.accounts["^whiskers75"] // "whiskers75"
      */
     this.accounts = {};
+    this.awaystatus = {};
+    this.awaynotify = false;
     var self = this;
     /**
      * Send a raw IRC line.
@@ -194,6 +196,7 @@ Soon.Client = function (options) {
          * @property {ident=} ident - The ident of the IRC user that the command is related to.
          * @property {host=} host - The host of the IRC user that the command is related to.
          * @property {account=} account - The IRC accountname of the IRC user that the command is related to.
+         * @property {status=} status - The status (away/here) of the IRC user that the command is related to. (H = here; G = gone)
          */
         if (line.prefix.indexOf('@') != -1) {
             line.nick = line.prefix.split('@')[0].split('!')[0];
@@ -201,6 +204,9 @@ Soon.Client = function (options) {
             line.host = line.prefix.split('@')[1];
             if (self.accounts[line.nick]) {
                 line.account = self.accounts[line.nick];
+            }
+            if (self.awaynotify && self.awaystatus[line.nick]) {
+                line.status = self.awaystatus[line.nick];
             }
         }
         if (options.debug) console.log('>>> ' + _line);
@@ -213,13 +219,29 @@ Soon.Client = function (options) {
              */
             self.emit('registered');
             self.connected = true;
-            self.send('CAP REQ :extended-join account-notify');
             if (options.channels) options.channels.forEach(self.join);
         }
         if (line.command === 'CAP') {
-            if (line.args[1] === 'ACK' && line.args[2].indexOf('sasl') != -1) {
-                self.send('AUTHENTICATE PLAIN');
+            if (line.args[1] === 'LS') {
+                if (line.args[2].indexOf('away-notify') != -1) {
+                    self.send('CAP REQ :away-notify');
+                }
+                if (line.args[2].indexOf('account-notify') != -1 && line.args[2].indexOf('extended-join') != -1) {
+                    self.send('CAP REQ :extended-join account-notify');
+                }
             }
+            if (line.args[1] === 'ACK') {
+                if (line.args[2].indexOf('sasl') != -1) {
+                    self.send('AUTHENTICATE PLAIN');
+                }
+                if (line.args[2].indexOf('away-notify') != -1) {
+                    self.awaynotify = true;
+                }
+            }
+            if (line.args[1] === 'NAK') {
+                self.emit('error', new Error('Capability negotiation failed.'));
+            }
+            if (!options.sasl) self.send('CAP END');
         }
         if (line.command === '904' || line.command === '905') {
             self.emit('error', new Error('SASL authentication failed.'));
@@ -230,14 +252,29 @@ Soon.Client = function (options) {
             self.send('CAP END');
         }
         if (line.command === '354') {
-            // a WHOX reply, we're assuming it's %na
-            if (line.args[2] === '0') return delete self.accounts[line.args[1]];
-            self.accounts[line.args[1]] = line.args[2];
+            if (self.awaynotify) {
+                // a WHOX reply, we're assuming it's %nfa
+                self.awaystatus[line.args[1]] = line.args[2].split('')[0];
+                if (line.args[3] === '0') return delete self.accounts[line.args[1]];
+                self.accounts[line.args[1]] = line.args[3];
+            } else {
+                // a WHOX reply, we're assuming it's %na
+                if (line.args[2] === '0') return delete self.accounts[line.args[1]];
+                self.accounts[line.args[1]] = line.args[2];
+            }
         }
         if (line.command === "ACCOUNT") {
             // account-notify CAP extension
             if (line.args[0] === '*') return delete self.accounts[line.nick];
             self.accounts[line.nick] = line.args[0];
+        }
+        if (line.command === "AWAY") {
+            // away-notify CAP extension
+            if (line.args[0]) {
+                self.awaystatus[line.nick] = 'G';
+            } else {
+                self.awaystatus[line.nick] = 'H';
+            }
         }
         if (line.command === 'PING') {
             self.send(String('PONG ' + line.tokens.join(' ')));
@@ -300,7 +337,11 @@ Soon.Client = function (options) {
                 }
             }
             if (line.nick === options.nick) {
-                self.send('WHO ' + line.args[0] + ' %na');
+                if (self.awaynotify) {
+                    self.send('WHO ' + line.args[0] + ' %nfa');
+                } else {
+                    self.send('WHO ' + line.args[0] + ' %na');
+                }
             }
             /**
              * JOIN event.
@@ -426,6 +467,7 @@ Soon.Client = function (options) {
         if (!options.tls && !options.sloppy) self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
         this.send('PASS ' + options.password);
     }
+    this.send('CAP LS');
     this.send('NICK ' + options.nick);
     this.send('USER ' + options.ident + ' X X :' + options.realname);
 };

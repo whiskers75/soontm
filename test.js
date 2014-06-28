@@ -1,6 +1,8 @@
 var Soon = require('./index.js');
 var client = new Soon.Client({host: 'test.net', port: 6667, nick: 'testing'});
 client.send = function() {};
+client.rl.emit('line', ':test.net CAP * LS :account-notify away-notify extended-join multi-prefix sasl tls');
+client.rl.emit('line', ':test.net CAP * ACK :account-notify away-notify extended-join');
 it('should emit registered on 001', function(done) {
     client.once('registered', done);
     client.rl.emit('line', ':test.net 001 testing :Testing\r\n');
@@ -182,4 +184,36 @@ it('should emit rpl_topic on 332', function(done) {
         done();
     });
     client.rl.emit('line', ':test.net 332 testing #testchan :test /topic');
+});
+it('should set away status to H when receiving a WHOX reply with the H status', function(done) {
+    client.once('privmsg', function(nick, channel, message, line) {
+        if (line.status != 'H') return done(new Error('failed to set H status'));
+        done();
+    });
+    client.rl.emit('line', ':test.net 354 testing here H*@ 0');
+    client.rl.emit('line', ':here!~test@testing/test PRIVMSG #testchan :testing is great!');
+});
+it('should set away status to G when receiving a WHOX reply with the G status', function(done) {
+    client.once('privmsg', function(nick, channel, message, line) {
+        if (line.status != 'G') return done(new Error('failed to set G status'));
+        done();
+    });
+    client.rl.emit('line', ':test.net 354 testing gone G*@ 0');
+    client.rl.emit('line', ':gone!~test@testing/test PRIVMSG #testchan :testing is great!');
+});
+it('should set away status to H when receiving AWAY without arguments', function(done) {
+    client.once('privmsg', function(nick, channel, message, line) {
+        if (line.status != 'H') return done(new Error('failed to set H status'));
+        done();
+    });
+    client.rl.emit('line', ':here!~test@testing/test AWAY');
+    client.rl.emit('line', ':here!~test@testing/test PRIVMSG #testchan :testing is great!');
+});
+it('should set away status to G when receiving AWAY with message', function(done) {
+    client.once('privmsg', function(nick, channel, message, line) {
+        if (line.status != 'G') return done(new Error('failed to set G status'));
+        done();
+    });
+    client.rl.emit('line', ':gone!~test@testing/test AWAY :gone');
+    client.rl.emit('line', ':gone!~test@testing/test PRIVMSG #testchan :testing is great!');
 });
