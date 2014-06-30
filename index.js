@@ -295,7 +295,7 @@ Soon.Client = function (options) {
             self.send(String('PONG ' + line.tokens.join(' ')));
         }
         if (line.command === 'ERROR') {
-            self.emit('error', new Error('Error from server: ' + line.args.join(' '));
+            self.emit('error', new Error('Error from server: ' + line.args.join(' ')));
             // This means we're disconnected, and there's no reconnection support right now, so exit unconditionally.
             process.exit(1);
         }
