@@ -24,6 +24,19 @@ var soontm = {
     ctcp: function (type, text) {
         if (!text) { return '\u0001' + type + '\u0001'; }
         return '\u0001' + type + ' ' + text + '\u0001';
+    },
+
+    /**
+     * Returns the lowercased version of the given nick or channel name
+     * according to IRC rules.
+     * http://tools.ietf.org/html/rfc2812#section-2.2
+     * @param {string} string - nick or channel name to lowercase
+     */
+    toLowerCase: function (string) {
+        return string.toLowerCase().replace(/\[/g, '{')
+            .replace(/\]/g, '}')
+            .replace(/\\/g, '|')
+            .replace(/~/g, '^');
     }
 };
 
@@ -483,13 +496,6 @@ soontm.Client = function (options) {
     this.send('CAP LS');
     this.send('NICK ' + options.nick);
     this.send('USER ' + options.ident + ' X X :' + options.realname);
-};
-// cf. http://tools.ietf.org/html/rfc2812#section-2.2
-soontm.toLowerCase = function (string) {
-    return string.toLowerCase().replace(/\[/g, '{')
-        .replace(/\]/g, '}')
-        .replace(/\\/g, '|')
-        .replace(/~/g, '^');
 };
 require('util').inherits(soontm.Client, EventEmitter);
 module.exports = soontm;
