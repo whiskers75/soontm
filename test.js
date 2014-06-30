@@ -220,7 +220,7 @@ it('should set away status to G when receiving AWAY with message', function (don
     client.rl.emit('line', ':gone!~test@testing/test AWAY :gone');
     client.rl.emit('line', ':gone!~test@testing/test PRIVMSG #testchan :testing is great!');
 });
-it('should send corrent AUTHENTICATE command when receiving \'AUTHENTICATE +\'', function (done) {
+it('should send correct AUTHENTICATE command when receiving \'AUTHENTICATE +\'', function (done) {
     client.send = function (msg) {
         if (msg !== 'AUTHENTICATE dGVzdGluZwB0ZXN0aW5nAHRlc3Rpbmc=') { return done(new Error('failed to reply exactly (got ' + msg + ')')); }
         done();
