@@ -1,29 +1,32 @@
-/*jslint node: true*/
-"use strict";
+/*jslint node: true, devel: true*/
+
+'use strict';
 
 var net = require('net'),
-readline = require('readline'),
-tls = require('tls'),
-EventEmitter = require('events').EventEmitter;
+    readline = require('readline'),
+    tls = require('tls'),
+    EventEmitter = require('events').EventEmitter;
 
-var Soon = {
+var soontm = {
     /** 
-     * Returns an action CTCP message to be passed to privmsg. (shorthand for Soon.ctcp('action');
+     * Returns an action CTCP message to be passed to privmsg. (shorthand for soontm.ctcp('action');
      * @param {string} text - Text to action.
      */
-    action: function(text) {
+    action: function (text) {
         return this.ctcp('ACTION', text);
-    }, 
+    },
+
     /**
      * Returns a CTCP message.
      * @param {string} type - Type of message (VERSION, ACTION, PING)
      * @param {string} text - Parameters to the message.
      */
-    ctcp: function(type, text) {
-        if (!text) return '\x01' + type + '\x01';
-        return '\x01' + type + ' ' + text + '\x01';
+    ctcp: function (type, text) {
+        if (!text) { return '\u0001' + type + '\u0001'; }
+        return '\u0001' + type + ' ' + text + '\u0001';
     }
 };
+
 /**
  * Create a new IRC connection.
  * @constructor
@@ -42,7 +45,7 @@ var Soon = {
  * @param {array=} options.channels - Array of channels to autojoin.
  * @param {boolean=} options.sloppy - Whether to care about security.
  */
-Soon.Client = function (options) {
+soontm.Client = function (options) {
     options = {
         host: options.host,
         port: options.port,
@@ -91,7 +94,7 @@ Soon.Client = function (options) {
      * Object mapping nicknames to accountnames.
      *
      * @example
-     * bot.accounts["^whiskers75"] // "whiskers75"
+     * bot.accounts['^whiskers75'] // 'whiskers75'
      */
     this.accounts = {};
     this.awaystatus = {};
@@ -109,11 +112,11 @@ Soon.Client = function (options) {
      *
      * @param {string} line - Line to send.
      * @example
-     * bot.send("REMOVE #botwar whiskers75 :get out");
+     * bot.send('REMOVE #botwar whiskers75 :get out');
      */
     this.send = function send(line) {
         line = line.replace(/\r?\n|\r/g, '');
-        if (options.debug) console.log('<<< ' + line);
+        if (options.debug) { console.log('<<< ' + line); }
         self.sock.write(line + '\r\n');
     };
     /**
@@ -124,7 +127,7 @@ Soon.Client = function (options) {
      */
     this.privmsg = function (target, message) {
         message = message.replace(/\r?\n|\r/g, '\n');
-        message.split('\n').forEach(function(bit) {
+        message.split('\n').forEach(function (bit) {
             self.send('PRIVMSG ' + target + ' :' + bit);
         });
     };
@@ -134,7 +137,7 @@ Soon.Client = function (options) {
      * @param {string} target - Person or channel to notice.
      * @param {string} message - Notice to send.
      */
-    this.notice = function(target, message) {
+    this.notice = function (target, message) {
         self.send('NOTICE ' + target + ' :' + message);
     };
     /**
@@ -142,7 +145,7 @@ Soon.Client = function (options) {
      *
      * @param {string} target - Channel to join.
      */
-    this.join = function(target) {
+    this.join = function (target) {
         self.send('JOIN ' + target);
     };
     /**
@@ -150,8 +153,8 @@ Soon.Client = function (options) {
      * @param {string} target - Channel to part.
      * @param {string=} message - Part message.
      */
-    this.part = function(target, message) {
-        if (!message) message = "";
+    this.part = function (target, message) {
+        if (!message) { message = ''; }
         self.send('PART ' + target + ' :' + message);
     };
     /**
@@ -159,23 +162,22 @@ Soon.Client = function (options) {
      *
      * @param {string=} message - Quit message.
      */
-    this.quit = function(message) {
-        if (!message) message = "";
+    this.quit = function (message) {
+        if (!message) { message = ''; }
         self.send('QUIT :' + message);
     };
     /**
-     * Stream of raw data. See the "???" event for more details.
+     * Stream of raw data. See the '???' event for more details.
      */
     this.raw = new EventEmitter();
     // IRC parser bit
-    this.rl.on('line', function (_line) {
-        var line = {tokens: String(_line).split(' ')};
+    this.rl.on('line', function (rawLine) {
+        var line = {tokens: String(rawLine).split(' ')}, i;
 
         if (line.tokens[0][0] === ':') {
             line.prefix = line.tokens[0].replace(':', '');
             line.tokens.shift();
-        }
-        else {
+        } else {
             line.prefix = '';
         }
 
@@ -184,14 +186,14 @@ Soon.Client = function (options) {
 
         line.args = [];
 
-        for (var i = 0; i < line.tokens.length; ++i) {
+        for (i = 0; i < line.tokens.length; i += 1) {
             if (line.tokens[i][0] === ':') {
                 line.args.push(line.tokens.slice(i).join(' ').slice(1));
                 break;
             }
             line.args.push(line.tokens[i]);
         }
-        
+
         /**
          * Raw data from the IRC parser.
          *
@@ -205,8 +207,8 @@ Soon.Client = function (options) {
          * @property {account=} account - The IRC accountname of the IRC user that the command is related to.
          * @property {status=} status - The status (away/here) of the IRC user that the command is related to. (H = here; G = gone)
          */
-        if (line.prefix.indexOf('@') != -1) {
-            line.nick = line.prefix.split('@')[0].split('!')[0];
+        if (line.prefix.indexOf('@') !== -1) {
+            line.nick = line.prefix.split('!')[0];
             line.ident = line.prefix.split('@')[0].split('!')[1];
             line.host = line.prefix.split('@')[1];
             if (self.accounts[line.nick]) {
@@ -216,74 +218,74 @@ Soon.Client = function (options) {
                 line.status = self.awaystatus[line.nick];
             }
         }
-        if (options.debug) console.log('>>> ' + _line);
+        if (options.debug) { console.log('>>> ' + rawLine); }
         if (line.command === '001') {
             /**
              * Event emitted when the client connects.
              *
-             * @memberof Soon.Client
+             * @memberof soontm.Client
              * @event registered
              */
             self.emit('registered');
             self.connected = true;
-            if (options.channels) options.channels.forEach(self.join);
+            if (options.channels) { options.channels.forEach(self.join); }
         }
         if (line.command === 'CAP') {
             if (line.args[1] === 'LS') {
-                if (line.args[2].indexOf('away-notify') != -1) {
+                if (line.args[2].indexOf('away-notify') !== -1) {
                     self.capabilities += 'away-notify ';
                 }
-                if (line.args[2].indexOf('account-notify') != -1 && line.args[2].indexOf('extended-join') != -1) {
+                if (line.args[2].indexOf('account-notify') !== -1 && line.args[2].indexOf('extended-join') !== -1) {
                     self.capabilities += 'extended-join account-notify ';
                 }
-                if (line.args[2].indexOf('multi-prefix') != -1) {
+                if (line.args[2].indexOf('multi-prefix') !== -1) {
                     self.capabilities += 'multi-prefix ';
                 }
-                if (options.sasl && options.password && line.args[2].indexOf('sasl') != -1) {
-                    if (!options.tls && !options.sloppy) self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
+                if (options.sasl && options.password && line.args[2].indexOf('sasl') !== -1) {
+                    if (!options.tls && !options.sloppy) { self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ')); }
                     self.capabilities += 'sasl ';
                 }
                 self.send('CAP REQ :' + self.capabilities);
             }
             if (line.args[1] === 'ACK') {
-                if (line.args[2].indexOf('sasl') != -1) {
+                if (line.args[2].indexOf('sasl') !== -1) {
                     self.send('AUTHENTICATE PLAIN');
                 }
-                if (line.args[2].indexOf('away-notify') != -1) {
+                if (line.args[2].indexOf('away-notify') !== -1) {
                     self.awaynotify = true;
                 }
             }
             if (line.args[1] === 'NAK') {
                 self.emit('error', new Error('Capability negotiation failed.'));
             }
-            if (!options.sasl) self.send('CAP END');
+            if (!options.sasl) { self.send('CAP END'); }
         }
         if (line.command === '904' || line.command === '905') {
             self.emit('error', new Error('SASL authentication failed.'));
             self.send('CAP END');
         }
         if (line.command === '903') {
-            if (options.debug) console.log('SASL successful!');
+            if (options.debug) { console.log('SASL successful!'); }
             self.send('CAP END');
         }
         if (line.command === '354') {
             if (self.awaynotify) {
                 // a WHOX reply, we're assuming it's %nfa
                 self.awaystatus[line.args[1]] = line.args[2].split('')[0];
-                if (line.args[3] === '0') return delete self.accounts[line.args[1]];
+                if (line.args[3] === '0') { return delete self.accounts[line.args[1]]; }
                 self.accounts[line.args[1]] = line.args[3];
             } else {
                 // a WHOX reply, we're assuming it's %na
-                if (line.args[2] === '0') return delete self.accounts[line.args[1]];
+                if (line.args[2] === '0') { return delete self.accounts[line.args[1]]; }
                 self.accounts[line.args[1]] = line.args[2];
             }
         }
-        if (line.command === "ACCOUNT") {
+        if (line.command === 'ACCOUNT') {
             // account-notify CAP extension
-            if (line.args[0] === '*') return delete self.accounts[line.nick];
+            if (line.args[0] === '*') { return delete self.accounts[line.nick]; }
             self.accounts[line.nick] = line.args[0];
         }
-        if (line.command === "AWAY") {
+        if (line.command === 'AWAY') {
             // away-notify CAP extension
             if (line.args[0]) {
                 self.awaystatus[line.nick] = 'G';
@@ -300,13 +302,13 @@ Soon.Client = function (options) {
             process.exit(1);
         }
         if (line.command === 'AUTHENTICATE' && line.args[0] === '+') {
-            self.send('AUTHENTICATE ' + new Buffer(options.user + '\0' + options.user + '\0' + options.password).toString('base64'));
+            self.send('AUTHENTICATE ' + new Buffer(options.user + '\u0000' + options.user + '\u0000' + options.password).toString('base64'));
         }
         /**
          * Message event.
          *
          * @event privmsg
-         * @memberof Soon.Client
+         * @memberof soontm.Client
          * @property {string} nick - The nickname that said the message.
          * @property {string} target - The target the message was said to (channel or your nick).
          * @property {string} message - The message said.
@@ -318,10 +320,10 @@ Soon.Client = function (options) {
             if (line.args[1][0] === '\u0001' && line.args[1][line.args[1].length - 1] === '\u0001') {
                 line.ctcp = line.args[1].slice(1, line.args[1].length - 1).split(' ');
                 if (line.ctcp[0].toLowerCase() === 'version') {
-                    return self.send('NOTICE ' + line.nick + ' :\x01VERSION ' + options.version + '\x01');
+                    return self.send('NOTICE ' + line.nick + ' :\u0001VERSION ' + options.version + '\u0001');
                 }
                 if (line.ctcp[0].toLowerCase() === 'ping') {
-                    return self.send('NOTICE ' + line.nick + ' :\x01PING ' + line.ctcp.slice(1, line.ctcp.length).join(' ') + '\x01');
+                    return self.send('NOTICE ' + line.nick + ' :\u0001PING ' + line.ctcp.slice(1, line.ctcp.length).join(' ') + '\u0001');
                 }
             }
             self.emit('privmsg', line.nick, line.args[0], line.args[1], line);
@@ -330,7 +332,7 @@ Soon.Client = function (options) {
          * NOTICE event.
          *
          * @event notice
-         * @memberof Soon.Client
+         * @memberof soontm.Client
          * @property {string} nick - The nickname that emitted the notice..
          * @property {string} target - The target that was noticed (channel or your nick).
          * @property {string} message - The notice.
@@ -347,9 +349,8 @@ Soon.Client = function (options) {
             if (line.args[1]) {
                 if (line.args[1] === '*') {
                     delete self.accounts[line.nick];
-                }
-                else {
-                self.accounts[line.nick] = line.args[1];
+                } else {
+                    self.accounts[line.nick] = line.args[1];
                 }
             }
             if (line.nick === options.nick) {
@@ -363,7 +364,7 @@ Soon.Client = function (options) {
              * JOIN event.
              *
              * @event join
-             * @memberof Soon.Client
+             * @memberof soontm.Client
              * @property {string} nick - The nickname that joined.
              * @property {string} channel - The channel that was joined.
              * @property {string=} account - The account that joined. (extended-join)
@@ -376,68 +377,68 @@ Soon.Client = function (options) {
          * PART event.
          *
          * @event part
-         * @memberof Soon.Client
+         * @memberof soontm.Client
          * @property {string} nick - The nickname that parted.
          * @property {string} channel - The channel that the user parted.
          * @property {string=} message - The part message that was given.
          * @property {object} line - The raw line data. See the line namespace.
          */
-        if (line.command === 'PART' && line.nick) self.emit('part', line.nick, line.args[0], line.args[1], line);
+        if (line.command === 'PART' && line.nick) { self.emit('part', line.nick, line.args[0], line.args[1], line); }
         /**
          * QUIT event. Emitted when a user leaves IRC.
          *
          * @event quit
-         * @memberof Soon.Client
+         * @memberof soontm.Client
          * @property {string} nick - The nickname that left.
          * @property {string} message - The quit message that was given.
          * @property {object} line - The raw line data. See the line namespace.
          */
-        if (line.command === 'QUIT' && line.nick) self.emit('quit', line.nick, line.args[0], line);
+        if (line.command === 'QUIT' && line.nick) { self.emit('quit', line.nick, line.args[0], line); }
         /**
          * Invite event. Emitted when the client recieves an /invite.
          *
          * @event invite
-         * @memberof Soon.Client
+         * @memberof soontm.Client
          * @property {string} nick - The nickname which is inviting you.
          * @property {string} channel - The channel you are being invited to.
          * @property {object} line - The raw line data. See the line namespace.
          */
-        if (line.command === 'INVITE') self.emit('invite', line.nick, line.args[1], line);
+        if (line.command === 'INVITE') { self.emit('invite', line.nick, line.args[1], line); }
         /**
          * RPL_TOPIC - emitted when the client recieves a topic reply.
          *
          * @event rpl_topic
-         * @memberof Soon.Client
+         * @memberof soontm.Client
          * @since 0.2.0
          * @property {string} channel - The channel of which you're getting a topic for
          * @property {string} topic - The topic itself.
          */
-        if (line.command === '332') self.emit('rpl_topic', line.args[1], line.args[2]);
+        if (line.command === '332') { self.emit('rpl_topic', line.args[1], line.args[2]); }
         /**
          * TOPIC - emitted when the client receives a topic change.
          *
          * @event topic
-         * @memberof Soon.Client
+         * @memberof soontm.Client
          * @property {string} nick - The nickname that changed the topic.
          * @property {string} channel - The channel where the topic is changed.
          * @property {string} topic - The topic itself.
          */
-        if (line.command === "TOPIC") self.emit('topic', line.nick, line.args[0], line.args[1]);
+        if (line.command === 'TOPIC') { self.emit('topic', line.nick, line.args[0], line.args[1]); }
         /**
          * WALLOPS - emitted when a wallops is received.
          *
          * @event wallops
-         * @memberof Soon.Client
+         * @memberof soontm.Client
          * @property {string} nick - The nickname that sent the wallops.
          * @property {string} message - The wallops that was sent.
          * @property {object} line - The raw line data. See the line namespace.
          */
-        if (line.command === 'WALLOPS') self.emit('wallops', line.nick, line.args[0], line);
+        if (line.command === 'WALLOPS') { self.emit('wallops', line.nick, line.args[0], line); }
         /**
          * RPL_MONONLINE - emitted when the client receives the 730 numeric
          *
          * @event rpl_mononline
-         * @memberof Soon.Client
+         * @memberof soontm.Client
          * @property {string} nick - The nickname that became online.
          * @property {string} username - The username of the user that became online.
          * @property {string} host - The hostname of the user that became online.
@@ -452,7 +453,7 @@ Soon.Client = function (options) {
          * RPL_MONOFFLINE - emitted when the client receives the 731 numeric
          *
          * @event rpl_monoffiline
-         * @memberof Soon.Client
+         * @memberof soontm.Client
          * @property {string} nick - The nickname that left the IRC network.
          * @property {object} line - The raw line data. See the line namespace.
          */
@@ -463,10 +464,10 @@ Soon.Client = function (options) {
         }
         /**
          * Raw event. Emitted on every properly-formatted IRC line.
-         * Replace "???" with the IRC command or numeric.
+         * Replace '???' with the IRC command or numeric.
          *
          * @event ???
-         * @memberof Soon.Client.raw
+         * @memberof soontm.Client.raw
          * @property {object} line - The raw line data. See the line namespace.
          * @since 0.2.0
          * @example
@@ -476,7 +477,7 @@ Soon.Client = function (options) {
         return this;
     });
     if (!options.sasl && options.password) {
-        if (!options.tls && !options.sloppy) self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
+        if (!options.tls && !options.sloppy) { self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ')); }
         this.send('PASS ' + options.password);
     }
     this.send('CAP LS');
@@ -484,11 +485,11 @@ Soon.Client = function (options) {
     this.send('USER ' + options.ident + ' X X :' + options.realname);
 };
 // cf. http://tools.ietf.org/html/rfc2812#section-2.2
-Soon.toLowerCase = function (string) {
+soontm.toLowerCase = function (string) {
     return string.toLowerCase().replace(/\[/g, '{')
-                               .replace(/\]/g, '}')
-                               .replace(/\\/g, '|')
-                               .replace(/~/g, '^');
+        .replace(/\]/g, '}')
+        .replace(/\\/g, '|')
+        .replace(/~/g, '^');
 };
-require('util').inherits(Soon.Client, EventEmitter);
-module.exports = Soon;
+require('util').inherits(soontm.Client, EventEmitter);
+module.exports = soontm;
