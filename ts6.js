@@ -158,7 +158,25 @@ SoonTS6.Server = function (options) {
          * @param {string=} message - Optional kill message.
          */
         this.kill = function(uid, message) {
-            selfserv.send('KILL ' + uid + ' :Killed (' + (message || '<No reason given>') + ')');
+            selfserv.send('KILL ' + uid + ' :' + self.objs.findByAttr('id', id) + ' (' + (message || '<No reason given>') + ')');
+        };
+        /**
+         * changes the host of a user
+         *
+         * @param {string} target - UID
+         * @param {string} host - New host.
+         */
+        this.chghost = function(uid, host) {
+            self.send('CHGHOST ' + uid + ' :' + host);
+        };
+        /**
+         * Identifies a user with services.
+         *
+         * @param {string} nick - Nick of the user to identify.
+         * @param {string=} account - Account of the user. If not given, user will be logged out.
+         */
+        this.identify = function(nick, account) {
+            self.send('ENCAP * SU ' + nick + ' ' + (account || ''));
         };
     };
     /**
