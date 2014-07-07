@@ -48,8 +48,9 @@ SoonTS6.Server = function (options) {
      * @param {string=} host - The object's hostname.
      * @param {string=} ident - The object's ident or user portion.
      * @param {string=} desc - The server description or gecos.
+     * @param {boolean} isService - If the IRCObj is a service.
      */
-    this.IRCObj = function(id, name, ts, modes, ident, host, desc) {
+    this.IRCObj = function(id, name, ts, modes, ident, host, desc, isService) {
         console.log(id, name, ts, modes, ident, host, desc);
         this.id = String(id) || '99XAAAAAA';
         this.name = String(name) || 'unidentified irc object';
@@ -58,6 +59,7 @@ SoonTS6.Server = function (options) {
         this.ident = String(ident) || '';
         this.host = String(host) || '';
         this.desc = String(desc) || '';
+        this.isService = isService || false;
         this.toString = function() {return name;};
         return this;
     };
@@ -173,7 +175,7 @@ SoonTS6.Server = function (options) {
     this.mkserv = function(name, ident, host, gecos) {
         self.curid++;
         var id = zPad(Number(self.curid), 6);
-        self.objs.push(new this.IRCObj(options.sid + id, name, (Date.now() / 100).toFixed(0), ['S', 'i', 'o'], host, ident, (gecos || name)))
+        self.objs.push(new this.IRCObj(options.sid + id, name, (Date.now() / 100).toFixed(0), ['S', 'i', 'o'], host, ident, (gecos || name), true));
         self.send('EUID ' + name + ' 1 ' + (Date.now() / 100).toFixed(0) + ' +Sio ' + host + ' ' + ident + ' 0 ' + options.sid + id + ' * * :' + (gecos || name));
         return new self.Service(options.sid + id);
     };
@@ -251,6 +253,24 @@ SoonTS6.Server = function (options) {
             }
             self.emit('privmsg', from, target, line.args[1]);
         }
+        if (line.command === 'KILL') {
+            /**
+             * KILL event. Emitted when a service or user is /KILL'd.
+             *
+             * @event kill
+             * @memberof SoonTS6.Server
+             * @param {object} from - The IRCObj that sent the kill.
+             * @param {object} victim - The IRCObj that was killed.
+             */
+            var from = self.objs.findByAttr('id', line.id);
+            var to = self.objs.findByAttr('id', line.args[0]);
+            if (to.isService) {
+                self.send('WALLOPS :KILL: Service ' + to.name + ' (' + to.id + ') was killed by ' + from.name + ' (' + from.id + ')!');
+            }
+            self.emit('kill', from, to);
+            delete self.objs[self.objs.indexOf(to)];
+        }
+
         return;
     });
     this.send('PASS ' + options.pass + ' TS 6 :' + options.sid);
