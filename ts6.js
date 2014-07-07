@@ -3,6 +3,17 @@
 function zPad( number, width ) {
   return new Array(width - parseInt(Math.log(number)/Math.LN10) ).join('0') + number;
 }
+console.colors = {
+      'white': ['\x1B[37m', '\x1B[39m'],
+      'grey': ['\x1B[90m', '\x1B[39m'],
+      'black': ['\x1B[30m', '\x1B[39m'],
+      'blue': ['\x1B[34m', '\x1B[39m'],
+      'cyan': ['\x1B[36m', '\x1B[39m'],
+      'green': ['\x1B[32m', '\x1B[39m'],
+      'magenta': ['\x1B[35m', '\x1B[39m'],
+      'red': ['\x1B[31m', '\ix1B[39m'],
+      'yellow': ['\x1B[33m', '\x1B[39m']
+};
 var net = require('net'),
 readline = require('readline'),
 EventEmitter = require('events').EventEmitter;
@@ -37,6 +48,8 @@ SoonTS6.Server = function (options) {
         input: this.sock,
         output: this.sock
     });
+    
+
     /**
      * Constructor for IRC objects (users or servers).
      *
@@ -68,6 +81,14 @@ SoonTS6.Server = function (options) {
      */
     this.objs = [];
     /**
+     * Whether we are bursting.
+     */
+    this.burst = true;
+    /**
+     * Date signifying when the burst started.
+     */
+    this.burstStart = new Date().getTime();
+    /**
      * Find an IRCObj by a certain attribute (like name, id...).
      *
      * @param {string} attr - The attribute to check.
@@ -90,11 +111,20 @@ SoonTS6.Server = function (options) {
      * @param {string=} id - SID or UID to use
      * @since 0.0.1
      */
-    this.send = function send(line, id) {
+    this.send = function(line, id) {
         line = line.replace(/\r?\n|\r/g, '');
         line = ':' + (id || options.sid) + ' ' + line;
         if (options.debug) console.log('<< ' + line);
         self.sock.write(line + '\r\n');
+    };
+    /**
+     * Function to be called to send a log message. 
+     * Interchange with your own at will. (By default, notices #services).
+     *
+     * @param {string} message - Message to log.
+     */
+    this.log = function(msg) {
+        self.send('NOTICE #services :*** ' + msg);
     };
     /**
      * Quit and disconnect from the other server.
@@ -193,6 +223,7 @@ SoonTS6.Server = function (options) {
     this.mkserv = function(name, ident, host, gecos) {
         self.curid++;
         var id = zPad(Number(self.curid), 6);
+        self.log('mkserv(): created ' + name + ' with sid ' + options.sid + id + ' [' + ident + '@' + host + '] (' + (gecos || name) + ')');
         self.objs.push(new this.IRCObj(options.sid + id, name, (Date.now() / 100).toFixed(0), ['S', 'i', 'o'], host, ident, (gecos || name), true));
         self.send('EUID ' + name + ' 1 ' + (Date.now() / 100).toFixed(0) + ' +Sio ' + host + ' ' + ident + ' 0 ' + options.sid + id + ' * * :' + (gecos || name));
         return new self.Service(options.sid + id);
@@ -232,24 +263,51 @@ SoonTS6.Server = function (options) {
          * @property {string} name - The human-readable name.
          */
         line.name = self.objs.findByAttr('id', line.id);
-        console.log('>> :' + line.id + ' (' + line.name + ') ' + line.command + ' ' + line.args.join(' '));
-        if (line.command === 'PING' && line.args[1] === options.sid) {
-            self.send('PONG ' + line.args[0] + ' :' + line.args[1]);
-        }
+        console.log('>> ' + console.colors.red[0] + ':' + line.id + console.colors.blue[0] + ' (' + line.name + ') ' + console.colors.blue[1] + console.colors.green[0] + line.command + console.colors.yellow[0] + ' ' + line.args.join(' ') + console.colors.yellow[1]);
+        
         if (line.command === 'PASS' && line.id === 'none') {
             self.theirid = line.args[3];
         }
+        if (self.burst) {
         if (line.command === 'SERVER' && line.id === self.theirid) {
             self.objs.push(new self.IRCObj(line.id, line.args[0], false, false, false, line.args[0]));
+            self.log('burst: I am connected to server ' + line.args[0] + ' with id ' + line.id);
         }
         if (line.command === 'SID') {
             self.objs.push(new self.IRCObj(line.args[2], line.args[0], false, false, false, false, line.args[3]));
+            self.log('burst: added remote server ' + line.args[0] + ' with id ' + line.args[2] + ' (' + line.args[3] + ')');
         }
         if (line.command === 'EUID') {
-            self.objs.push(new self.IRCObj(line.args[7], line.args[0], line.args[2], line.args[3].replace('+', '').split(''), line.args[7], line.args[4], line.args[10]));
+            self.objs.push(new self.IRCObj(line.args[7], line.args[0], line.args[2], line.args[3].replace('+', '').split(''), line.args[5], line.args[4], line.args[10]));
+            self.log('burst: added user ' + line.args[0] + ' (' + line.args[3] + ') [' + line.args[4] + '@' + line.args[5] + '] with id ' + line.args[7] + ' (' + line.args[10] + ')');
         }
         if (line.command === 'SJOIN') {
             self.objs.push(new self.IRCObj(line.args[1], line.args[1], line.args[0], line.args[2].replace('+', '').split('')));
+            self.log('burst: added channel ' + line.args[1] + ' with modes ' + line.args[2]);
+        }
+        if (line.command === 'PING' && (line.args[1] === options.sid || !line.args[1])) {
+            if (!line.args[1]) {
+                self.send('PONG ' + line.args[0]);
+            }
+            else {
+                self.send('PONG ' + line.args[0] + ' :' + line.args[1]);
+            }
+            self.log('burst: end of burst, took ' + (new Date().getTime() - self.burstStart) + 'ms');
+            self.burst = false;
+        }
+        return;
+        }
+        if (line.command === 'PING' && (line.args[1] === options.sid || !line.args[1])) {
+            if (!line.args[1]) {
+                self.send('PONG ' + line.args[0]);
+            }
+            else {
+                self.send('PONG ' + line.args[0] + ' :' + line.args[1]);
+            }
+        }
+        if (line.command === 'EUID') {
+            self.log('euid: added user ' + line.args[0] + ' (' + line.args[3] + ') [' + line.args[4] + '@' + line.args[5] + '] with id ' + line.args[7] + ' (' + line.args[10] + ')');
+            self.objs.push(new self.IRCObj(line.args[7], line.args[0], line.args[2], line.args[3].replace('+', '').split(''), line.args[7], line.args[4], line.args[10]));
         }
         if (line.command === 'PRIVMSG') {
             /**
@@ -283,7 +341,7 @@ SoonTS6.Server = function (options) {
             var from = self.objs.findByAttr('id', line.id);
             var to = self.objs.findByAttr('id', line.args[0]);
             if (to.isService) {
-                self.send('WALLOPS :KILL: Service ' + to.name + ' (' + to.id + ') was killed by ' + from.name + ' (' + from.id + ')!');
+                self.log('KILL: Service ' + to.name + ' (' + to.id + ') was killed by ' + from.name + ' (' + from.id + ')!');
             }
             self.emit('kill', from, to);
             delete self.objs[self.objs.indexOf(to)];
@@ -292,7 +350,7 @@ SoonTS6.Server = function (options) {
         return;
     });
     this.send('PASS ' + options.pass + ' TS 6 :' + options.sid);
-    this.send('CAPAB :ENCAP SERVICES EUID RSFNC'); // TODO: KLN UNKLN EOPMOD EX IE QS
+    this.send('CAPAB :ENCAP SERVICES EUID RSFNC EX IE QS'); // TODO: KLN UNKLN EOPMOD EX IE QS
     this.send('SERVER ' + options.sname + ' 1 :' + options.sname);
 };
 require('util').inherits(SoonTS6.Server, EventEmitter);
