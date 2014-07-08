@@ -8,20 +8,13 @@ var net = require('net'),
     EventEmitter = require('events').EventEmitter;
 
 var soontm = {
-    /** 
-     * Returns an action CTCP message to be passed to privmsg. (shorthand for soontm.ctcp('action');
-     * @param {string} text - Text to action.
-     */
-    action: function (text) {
-        return this.ctcp('ACTION', text);
-    },
-
     /**
      * Returns a CTCP message.
-     * @param {string} type - Type of message (VERSION, ACTION, PING)
+     *
+     * @param {string} type - Type of the message (e.g. ACTION, PING, VERSION).
      * @param {string} text - Parameters to the message.
      */
-    ctcp: function (type, text) {
+    makeCtcp: function (type, text) {
         if (!text) { return '\u0001' + type + '\u0001'; }
         return '\u0001' + type + ' ' + text + '\u0001';
     },
@@ -30,6 +23,7 @@ var soontm = {
      * Returns the lowercased version of the given nick or channel name
      * according to IRC rules.
      * http://tools.ietf.org/html/rfc2812#section-2.2
+     *
      * @param {string} string - nick or channel name to lowercase
      */
     toLowerCase: function (string) {
@@ -145,6 +139,25 @@ soontm.Client = function (options) {
         });
     };
     /**
+     * Send a CTCP request.
+     *
+     * @param {string} target - Person or channel to message.
+     * @param {string} type - Type of message (e.g. ACTION, PING, VERSION).
+     * @param {string} text - Parameters to the message.
+     */
+    this.ctcp = function (target, type, text) {
+        self.privmsg(target, soontm.makeCtcp(type, text));
+    };
+    /**
+     * Send a CTCP ACTION (/me).
+     *
+     * @param {string} target - Person or channel to message.
+     * @param {string} message - Message to send.
+     */
+    this.action = function (target, message) {
+        self.ctcp(target, 'ACTION', message);
+    };
+    /**
      * Send a NOTICE.
      *
      * @param {string} target - Person or channel to notice.
@@ -152,6 +165,16 @@ soontm.Client = function (options) {
      */
     this.notice = function (target, message) {
         self.send('NOTICE ' + target + ' :' + message);
+    };
+    /**
+     * Send a CTCP reply.
+     *
+     * @param {string} target - Person or channel to message.
+     * @param {string} type - Type of message (e.g. ACTION, PING, VERSION).
+     * @param {string} text - Parameters to the message.
+     */
+    this.ctcpReply = function (target, type, text) {
+        self.notice(target, soontm.makeCtcp(type, text));
     };
     /**
      * Join a channel.
