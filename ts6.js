@@ -197,7 +197,7 @@ SoonTS6.Server = function (options) {
          * @param {string} newnick - The new nick.
          */
         this.rsfnc = function(nick, newnick) {
-            var targetobj = self.objs.findByAttr('name', nick).;
+            var targetobj = self.objs.findByAttr('name', nick);
             var uid = targetobj.id;
             targetobj.name = newnick;
             var server = self.objs.findByAttr('id', uid.substring(0,3)).name;
