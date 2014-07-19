@@ -48,7 +48,7 @@ SoonTS6.Server = function (options) {
         input: this.sock,
         output: this.sock
     });
-    
+
 
     /**
      * Constructor for IRC objects (users or servers).
@@ -66,7 +66,7 @@ SoonTS6.Server = function (options) {
      * @param {object} data.metadata - Any further metadata about the IRCObj.
      */
     this.IRCObj = function(data) {
-        
+
         /**
          * UID or SID of the object.
          */
@@ -232,7 +232,7 @@ SoonTS6.Server = function (options) {
         self.sock.write(line + '\r\n');
     };
     /**
-     * Function to be called to send a log message. 
+     * Function to be called to send a log message.
      * Interchange with your own at will. (By default, notices #services).
      *
      * @param {string} message - Message to log.
@@ -242,7 +242,7 @@ SoonTS6.Server = function (options) {
     };
     /**
      * Quit and disconnect from the other server.
-     * 
+     *
      * @since 0.0.1
      */
     this.squit = function() {
@@ -262,11 +262,11 @@ SoonTS6.Server = function (options) {
         var id = zPad(Number(self.curid), 6);
         self.log('mkserv(): created ' + name + ' with sid ' + options.sid + id + ' [' + ident + '@' + host + '] (' + (gecos || name) + ')');
         var o = new this.IRCObj({
-            id: options.sid + id, 
+            id: options.sid + id,
             name: name,
             ts: (Date.now() / 100).toFixed(0),
             modes: ['S', 'i', 'o'],
-            host: host, 
+            host: host,
             ident: ident,
             desc: (gecos || name),
             isService: true
@@ -311,7 +311,7 @@ SoonTS6.Server = function (options) {
          */
         line.name = self.objs.findByAttr('id', line.id);
         console.log('>> ' + console.colors.red[0] + ':' + line.id + console.colors.blue[0] + ' (' + line.name + ') ' + console.colors.blue[1] + console.colors.green[0] + line.command + console.colors.yellow[0] + ' ' + line.args.join(' ') + console.colors.yellow[1]);
-        
+
         if (line.command === 'PASS' && line.id === 'none') {
             self.theirid = line.args[3];
         }
@@ -374,7 +374,7 @@ SoonTS6.Server = function (options) {
             }
         }
         if (line.command === 'EUID') {
-            
+
             if (self.objs.findByAttr('id', line.args[7])) {
                 self.log('euid: updated user ' + line.args[0] + ' (' + line.args[3] + ') [' + line.args[4] + '@' + line.args[5] + '] with id ' + line.args[7] + ' (' + line.args[10] + ')');
                 var o = self.objs.findByAttr('id', line.args[7]);
@@ -437,7 +437,7 @@ SoonTS6.Server = function (options) {
             self.emit('kill', from, to);
             self.log('KILL: Deleting IRCObj ' + to.id + ' (killed)');
             delete self.objs[self.objs.indexOf(to)];
-            
+
         }
         if (line.command === 'QUIT') {
             /**
