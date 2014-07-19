@@ -289,6 +289,7 @@ SoonTS6.Server = function (options) {
      * @since 0.0.1
      */
     this.mkserv = function(name, ident, host, gecos) {
+        if (self.objs.findByAttr('name', name) && self.objs.findByAttr('name', name).id.substring(0,3) === options.sid) return self.objs.findByAttr('name', name);
         self.curid++;
         var id = zeroPad(Number(self.curid), 6);
         self.log('mkserv(): created ' + name + ' with sid ' + options.sid + id + ' [' + ident + '@' + host + '] (' + (gecos || name) + ')');
