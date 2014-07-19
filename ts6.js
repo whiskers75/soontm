@@ -466,15 +466,31 @@ SoonTS6.Server = function (options) {
             }
             var sid = targetobj.id.substring(0,3);
             var servobj = self.objs.findByAttr('id', sid);
-            if (!servobj) return self.send('WALLOPS :I have suffered a terrible failure. (Couldn\'t get server name for user ' + targetobj.name + '; Tried to search for server: ' + sid + ')');
+            if (!servobj) return self.log('I have suffered a terrible failure. (Couldn\'t get server name for user ' + targetobj.name + '; Tried to search for server: ' + sid + ')');
             self.send('311 ' + from + ' ' + targetobj.name + ' ' + targetobj.ident + ' ' + targetobj.host + ' * :' + targetobj.desc);
-            self.send('312 ' + from + ' ' + targetobj.name + ' ' + servobj.name+ ' :' + servobj.desc);
+            self.send('312 ' + from + ' ' + targetobj.name + ' ' + servobj.name + ' :' + servobj.desc);
             if (targetobj.modes.indexOf('S') !== -1) self.send('313 ' + from + ' ' + targetobj.name + ' ' + ':is a Network Service');
             if (targetobj.modes.indexOf('o') !== -1 && targetobj.modes.indexOf('S') === -1 && targetobj.modes.indexOf('a') === -1) self.send('313 ' + from + ' ' + targetobj.name + ' ' + ':is an IRC Operator');
             if (targetobj.modes.indexOf('a') !== -1 && targetobj.modes.indexOf('S') === -1) self.send('313 ' + from + ' ' + targetobj.name + ' ' + ':is a Server Administrator');
             self.send('318 ' + from + ' ' + targetobj.name + ' ' + ':End of WHOIS');
         }
-
+        if (line.command === 'NICK') {
+            var from = self.objs.findByAttr('id', line.id);
+            var oldnick = from.name;
+            var newnick = line.args[0];
+            from.name = line.args[0];
+            /**
+             * NICK event. Emitted when a user changes their nickname.
+             *
+             * @event nick
+             * @memberof SoonTS6.Server
+             * @param {object} obj - The IRCObj that changed nick.
+             * @param {string} oldnick - The old nick.
+             * @param {string} newnick - The new nick.
+             */
+            self.emit('nick', from, oldnick, newnick);
+            self.log('NICK: IRCObj ' + oldnick + ' (' + line.id + ') -> ' + newnick);
+        }
         return;
     });
     this.send('PASS ' + options.pass + ' TS 6 :' + options.sid);
