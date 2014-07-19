@@ -461,6 +461,11 @@ SoonTS6.Server = function (options) {
     this.send('PASS ' + options.pass + ' TS 6 :' + options.sid);
     this.send('CAPAB :ENCAP SERVICES EUID RSFNC EX IE QS'); // TODO: KLN UNKLN EOPMOD EX IE QS
     this.send('SERVER ' + options.sname + ' 1 :' + options.sdesc);
+    self.objs.push(new self.IRCObj({
+        id: options.sid,
+        name: options.sname,
+        desc: options.sdesc
+    }));
 };
 require('util').inherits(SoonTS6.Server, EventEmitter);
 module.exports = SoonTS6;
