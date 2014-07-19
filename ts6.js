@@ -121,7 +121,8 @@ SoonTS6.Server = function (options) {
          */
         this.join = function(chan) {
             if (!this.isService) throw new Error('Called service function on non-service IRCObj');
-            self.send('SJOIN ' + (Date.now() / 100).toFixed(0) + ' ' + chan + ' +nt :@' + this.id);
+            var chan = self.objs.findByAttr('name', chan);
+            self.send('SJOIN ' + Number(Number((Date.now() / 100).toFixed(0)) + 5) + ' ' + chan + ' +' + chan.modes.join('') + ' :@' + this.id);
         };
         /**
          * (if service) Leaves a channel.
@@ -348,6 +349,7 @@ SoonTS6.Server = function (options) {
             self.log('burst: added user ' + line.args[0] + ' (' + line.args[3] + ') [' + line.args[4] + '@' + line.args[5] + '] with id ' + line.args[7] + ' (' + line.args[10] + ')');
         }
         if (line.command === 'SJOIN') {
+            if (self.objs.findByAttr('name', line.args[1])) return;
             self.objs.push(new self.IRCObj({
                 id: line.args[1],
                 name: line.args[1],
@@ -365,6 +367,13 @@ SoonTS6.Server = function (options) {
             }
             self.log('burst: end of burst, took ' + (new Date().getTime() - self.burstStart) + 'ms');
             self.burst = false;
+            /**
+             * EOB - emitted when burst ends.
+             *
+             * @memberof SoonTS6.Server
+             * @event eob
+             */
+            self.emit('eob');
         }
         return;
         }
@@ -461,7 +470,7 @@ SoonTS6.Server = function (options) {
             var targetobj = self.objs.findByAttr('name', target);
             if (!targetobj || targetobj.id.length === 3) {
                 self.send('401 ' + from + ' ' + target + ' :No such nick/channel');
-                self.send('318 ' + from + ' ' + target = ' :End of WHOIS');
+                self.send('318 ' + from + ' ' + target + ' :End of WHOIS');
                 return;
             }
             var sid = targetobj.id.substring(0,3);
