@@ -1,8 +1,21 @@
 /*jslint node: true*/
 "use strict";
-function zPad( number, width ) {
-  return new Array(width - parseInt(Math.log(number)/Math.LN10) ).join('0') + number;
+function repeatString(string, times) {
+    var result, i;
+
+    result = '';
+
+    for (i = 0; i < times; i++) {
+        result += string;
+    }
+
+    return result;
 }
+
+function zeroPad(number, width) {
+  return repeatString('0', width - number.toString().length) + number;
+}
+
 var net = require('net'),
 readline = require('readline'),
 EventEmitter = require('events').EventEmitter;
@@ -143,7 +156,7 @@ Soon.Server = function (options) {
      */
     this.mkserv = function(name, ident, host, gecos) {
         self.curid++;
-        var id = zPad(Number(self.curid), 6);
+        var id = zeroPad(Number(self.curid), 6);
         self.ids[options.sid + id] = name;
         self.send('EUID ' + name + ' 1 ' + (Date.now() / 100).toFixed(0) + ' +Sio ' + host + ' ' + ident + ' 0 ' + options.sid + id + ' * * :' + (gecos || name));
         return new self.Service(options.sid + id);
