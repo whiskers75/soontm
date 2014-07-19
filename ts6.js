@@ -290,7 +290,7 @@ SoonTS6.Server = function (options) {
      */
     this.mkserv = function(name, ident, host, gecos) {
         self.curid++;
-        var id = zPad(Number(self.curid), 6);
+        var id = zeroPad(Number(self.curid), 6);
         self.log('mkserv(): created ' + name + ' with sid ' + options.sid + id + ' [' + ident + '@' + host + '] (' + (gecos || name) + ')');
         var o = new this.IRCObj({
             id: options.sid + id,
