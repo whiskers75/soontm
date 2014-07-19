@@ -323,7 +323,7 @@ SoonTS6.Server = function (options) {
             self.objs.push(new self.IRCObj({
                 id: line.id,
                 name: line.args[0],
-                desc: line.args[0]
+                desc: line.args[2]
             }));
             self.log('burst: I am connected to server ' + line.args[0] + ' with id ' + line.id);
         }
