@@ -29,6 +29,8 @@ var SoonTS6 = {};
  * @param {string} options.sid - Server ID to use
  * @param {string} options.sname - Server name to use
  * @param {string} options.pass - Server linking password
+ * @param {string=} options.sdesc - Server description
+ * @param {string=} options.debug - Whether to log protocol debug messages.
  */
 SoonTS6.Server = function (options) {
     options = {
@@ -37,7 +39,8 @@ SoonTS6.Server = function (options) {
         sid: options.sid || '50X',
         pass: options.pass || 'pls',
         sname: options.sname,
-        debug: true
+        sdesc: options.sdesc || 'soontm/ts6 services',
+        debug: options.debug || true
     };
     var self = this;
     this.sock = net.connect({
@@ -457,7 +460,7 @@ SoonTS6.Server = function (options) {
     });
     this.send('PASS ' + options.pass + ' TS 6 :' + options.sid);
     this.send('CAPAB :ENCAP SERVICES EUID RSFNC EX IE QS'); // TODO: KLN UNKLN EOPMOD EX IE QS
-    this.send('SERVER ' + options.sname + ' 1 :' + options.sname);
+    this.send('SERVER ' + options.sname + ' 1 :' + options.sdesc);
 };
 require('util').inherits(SoonTS6.Server, EventEmitter);
 module.exports = SoonTS6;
