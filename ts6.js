@@ -199,11 +199,9 @@ SoonTS6.Server = function (options) {
         this.rsfnc = function(nick, newnick) {
             var targetobj = self.objs.findByAttr('name', nick);
             var uid = targetobj.id;
-            targetobj.name = newnick;
             var server = self.objs.findByAttr('id', uid.substring(0,3)).name;
             var ts = targetobj.ts;
             var oldts = (Date.now() / 100).toFixed(0) - 60;
-            self.emit('nick', targetobj, nick, newnick);
             self.log('RSFNC: IRCObj ' + nick + ' (' + uid + ') -> ' + newnick);
             self.send('ENCAP ' + server + ' RSFNC ' + nick + ' ' + newnick + ' ' + oldts + ' ' + ts);
         };
