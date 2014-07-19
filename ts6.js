@@ -455,6 +455,25 @@ SoonTS6.Server = function (options) {
             self.emit('quit', from);
             delete self.objs[self.objs.indexOf(from)];
         }
+        if (line.command === 'WHOIS') {
+            var from = line.id;
+            var target = line.args[1];
+            var targetobj = self.objs.findByAttr('name', target);
+            if (!targetobj || targetobj.id.length === 3) {
+                self.send('401 ' + from + ' ' + target + ' :No such nick/channel');
+                self.send('318 ' + from + ' ' + target = ' :End of WHOIS');
+                return;
+            }
+            var sid = targetobj.id.substring(0,3);
+            var servobj = self.objs.findByAttr('id', sid);
+            if (!servobj) return self.send('WALLOPS :I have suffered a terrible failure. (Couldn\'t get server name for user ' + targetobj.name + '; Tried to search for server: ' + sid + ')');
+            self.send('311 ' + from + ' ' + targetobj.name + ' ' + targetobj.ident + ' ' + targetobj.host + ' * :' + targetobj.desc);
+            self.send('312 ' + from + ' ' + targetobj.name + ' ' + servobj.name+ ' :' + servobj.desc);
+            if (targetobj.modes.indexOf('S') !== -1) self.send('313 ' + from + ' ' + targetobj.name + ' ' + ':is a Network Service');
+            if (targetobj.modes.indexOf('o') !== -1 && targetobj.modes.indexOf('S') === -1 && targetobj.modes.indexOf('a') === -1) self.send('313 ' + from + ' ' + targetobj.name + ' ' + ':is an IRC Operator');
+            if (targetobj.modes.indexOf('a') !== -1 && targetobj.modes.indexOf('S') === -1) self.send('313 ' + from + ' ' + targetobj.name + ' ' + ':is a Server Administrator');
+            self.send('318 ' + from + ' ' + targetobj.name + ' ' + ':End of WHOIS');
+        }
 
         return;
     });
