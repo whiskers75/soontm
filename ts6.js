@@ -190,6 +190,23 @@ SoonTS6.Server = function (options) {
             if (!this.isService) throw new Error('Called service function on non-service IRCObj');
             self.mkserv(this.name, this.ident, this.host, this.description);
         };
+        /**
+         * Forcibly changes the nick of an user.
+         *
+         * @param {string} nick - The current nick.
+         * @param {string} newnick - The new nick.
+         */
+        this.rsfnc = function(nick, newnick) {
+            var targetobj = self.objs.findByAttr('name', nick).;
+            var uid = targetobj.id;
+            targetobj.name = newnick;
+            var server = self.objs.findByAttr('id', uid.substring(0,3)).name;
+            var ts = targetobj.ts;
+            var oldts = (Date.now() / 100).toFixed(0) - 60;
+            self.emit('nick', targetobj, nick, newnick);
+            self.log('RSFNC: IRCObj ' + nick + ' (' + uid + ') -> ' + newnick);
+            self.send('ENCAP ' + server + ' RSFNC ' + nick + ' ' + newnick + ' ' + oldts + ' ' + ts);
+        };
     };
     require('util').inherits(this.IRCObj, EventEmitter);
     /**
