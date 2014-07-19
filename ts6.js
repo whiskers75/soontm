@@ -1,7 +1,19 @@
 /*jslint node: true*/
 "use strict";
-function zPad( number, width ) {
-  return new Array(width - parseInt(Math.log(number)/Math.LN10) ).join('0') + number;
+function repeatString(string, times) {
+    var result, i;
+
+    result = '';
+
+    for (i = 0; i < times; i++) {
+        result += string;
+    }
+
+    return result;
+}
+
+function zeroPad(number, width) {
+    return repeatString('0', width - number.toString().length) + number;
 }
 console.colors = {
       'white': ['\x1B[37m', '\x1B[39m'],
