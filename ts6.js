@@ -548,6 +548,12 @@ SoonTS6.Server = function (options) {
         desc: options.sdesc
     }));
 };
+SoonTS6.toLowerCase = function (string) {
+    return string.toLowerCase().replace(/\[/g, '{')
+                               .replace(/\]/g, '}')
+                               .replace(/\\/g, '|')
+                               .replace(/~/g, '^');
+};
 require('util').inherits(SoonTS6.Server, EventEmitter);
 module.exports = SoonTS6;
 
