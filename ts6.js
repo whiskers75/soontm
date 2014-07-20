@@ -184,6 +184,9 @@ SoonTS6.Server = function (options) {
         this.chghost = function(uid, host) {
             if (!this.isService) throw new Error('Called service function on non-service IRCObj');
             self.send('CHGHOST ' + uid + ' :' + host);
+            var o = self.objs.findByAttr('id', uid);
+            o.host = host;
+            self.log('CHGHOST IRCObj ' + o.name + ' (' + o.id + '): Host changed to ' + o.host);
         };
         /**
          * (if service) Identifies a user with services.
