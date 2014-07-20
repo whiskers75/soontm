@@ -42,6 +42,7 @@ var SoonTS6 = {};
  * @param {string} options.sname - Server name to use
  * @param {string} options.pass - Server linking password
  * @param {string=} options.sdesc - Server description
+ * @param {string=} options.logchannel - Logging channel
  * @param {string=} options.debug - Whether to log protocol debug messages.
  */
 SoonTS6.Server = function (options) {
@@ -52,6 +53,7 @@ SoonTS6.Server = function (options) {
         pass: options.pass || 'pls',
         sname: options.sname,
         sdesc: options.sdesc || 'soontm/ts6 services',
+        logchannel: options.logchannel || '#services',
         debug: options.debug || true
     };
     var self = this;
@@ -219,6 +221,17 @@ SoonTS6.Server = function (options) {
             var oldts = (Date.now() / 100).toFixed(0) - 60;
             self.log('RSFNC: IRCObj ' + nick + ' (' + uid + ') -> ' + newnick);
             self.send('ENCAP ' + server + ' RSFNC ' + nick + ' ' + newnick + ' ' + oldts + ' ' + ts);
+        };
+        /**
+         * Send a message to the logchannel.
+         *
+         * @param {string} user - User who called the command.
+         * @param {string} command - Command which was called.
+         * @param {string} text - Information about the command.
+         */
+        this.logmessage = function(user, command, text) {
+            self.log(user + ' ' + command + ': ' + text);
+            this.privmsg(options.logchannel, user + ' ' + command + ': ' + text);
         };
     };
     require('util').inherits(this.IRCObj, EventEmitter);
