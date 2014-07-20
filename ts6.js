@@ -192,8 +192,20 @@ SoonTS6.Server = function (options) {
             if (!this.isService) throw new Error('Called service function on non-service IRCObj');
             self.send('CHGHOST ' + uid + ' :' + host);
             var o = self.objs.findByAttr('id', uid);
+            if (o.realhost === '*') o.realhost = o.host;
+            var oldhost = o.host;
             o.host = host;
             self.log('CHGHOST IRCObj ' + o.name + ' (' + o.id + '): Host changed to ' + o.host);
+            /**
+             * chghost event. Emitted when a host is changed.
+             *
+             * @event chghost
+             * @memberof SoonTS6.Server
+             * @param {object} obj - The IRCObj that changed the host.
+             * @param {string} oldhost - The old host.
+             * @param {string} newhost - The new host.
+             */
+            self.emit('chghost', o, oldhost, newhost);
         };
         /**
          * (if service) Identifies a user with services.
@@ -576,8 +588,20 @@ SoonTS6.Server = function (options) {
         if (line.command === 'CHGHOST') {
             var id = line.args[0];
             var o = self.objs.findByAttr('id', id);
+            if (o.realhost === '*') o.realhost = o.host;
+            var oldhost = o.host;
             o.host = line.args[1];
             self.log('CHGHOST IRCObj ' + o.name + ' (' + o.id + '): Host changed to ' + o.host);
+            /**
+             * chghost event. Emitted when a host is changed.
+             *
+             * @event chghost
+             * @memberof SoonTS6.Server
+             * @param {object} obj - The IRCObj that changed the host.
+             * @param {string} oldhost - The old host.
+             * @param {string} newhost - The new host.
+             */
+            self.emit('chghost', o, oldhost, newhost);
         }
         return;
     });
