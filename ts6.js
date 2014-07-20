@@ -400,6 +400,14 @@ SoonTS6.Server = function (options) {
                 realhost: line.args[8]
             }));
             self.log('burst: added user ' + line.args[0] + ' (' + line.args[3] + ') [' + line.args[4] + '@' + line.args[5] + '] with id ' + line.args[7] + ' (' + line.args[10] + ')');
+            /**
+             * newclient - emitted when a client connects or a client is added on burst.
+             *
+             * @memberof SoonTS6.Server
+             * @event newclient
+             * @param {string} id - ID of the new IRCObj.
+             */
+            self.emit('newclient', line.args[7]);
         }
         if (line.command === 'SJOIN') {
             if (self.objs.findByAttr('name', line.args[1])) return;
@@ -467,6 +475,14 @@ SoonTS6.Server = function (options) {
                 realhost: line.args[8]
             }));
             }
+            /**
+             * newclient - emitted when a client connects or a client is added on burst.
+             *
+             * @memberof SoonTS6.Server
+             * @event newclient
+             * @param {string} id - ID of the new IRCObj.
+             */
+            self.emit('newclient', line.args[7]);
         }
         if (line.command === 'PRIVMSG') {
             /**
