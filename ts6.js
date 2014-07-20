@@ -173,7 +173,7 @@ SoonTS6.Server = function (options) {
          */
         this.kill = function(uid, message) {
             if (!this.isService) throw new Error('Called service function on non-service IRCObj');
-            this.send('KILL ' + uid + ' :' + self.objs.findByAttr('id', uid) + ' (' + (message || '<No reason given>') + ')');
+            this.send('KILL ' + uid + ' :' + this.id + ' (' + (message || '<No reason given>') + ')');
         };
         /**
          * (if service) changes the host of a user
@@ -184,6 +184,9 @@ SoonTS6.Server = function (options) {
         this.chghost = function(uid, host) {
             if (!this.isService) throw new Error('Called service function on non-service IRCObj');
             self.send('CHGHOST ' + uid + ' :' + host);
+            var o = self.objs.findByAttr('id', uid);
+            o.host = host;
+            self.log('CHGHOST IRCObj ' + o.name + ' (' + o.id + '): Host changed to ' + o.host);
         };
         /**
          * (if service) Identifies a user with services.
@@ -289,6 +292,7 @@ SoonTS6.Server = function (options) {
      * @since 0.0.1
      */
     this.mkserv = function(name, ident, host, gecos) {
+        if (self.objs.findByAttr('name', name) && self.objs.findByAttr('name', name).id.substring(0,3) === options.sid) return self.objs.findByAttr('name', name);
         self.curid++;
         var id = zeroPad(Number(self.curid), 6);
         self.log('mkserv(): created ' + name + ' with sid ' + options.sid + id + ' [' + ident + '@' + host + '] (' + (gecos || name) + ')');
@@ -527,6 +531,12 @@ SoonTS6.Server = function (options) {
             self.emit('nick', from, oldnick, newnick);
             self.log('NICK: IRCObj ' + oldnick + ' (' + line.id + ') -> ' + newnick);
         }
+        if (line.command === 'CHGHOST') {
+            var id = line.args[0];
+            var o = self.objs.findByAttr('id', id);
+            o.host = line.args[1];
+            self.log('CHGHOST IRCObj ' + o.name + ' (' + o.id + '): Host changed to ' + o.host);
+        }
         return;
     });
     this.send('PASS ' + options.pass + ' TS 6 :' + options.sid);
@@ -537,6 +547,12 @@ SoonTS6.Server = function (options) {
         name: options.sname,
         desc: options.sdesc
     }));
+};
+SoonTS6.toLowerCase = function (string) {
+    return string.toLowerCase().replace(/\[/g, '{')
+                               .replace(/\]/g, '}')
+                               .replace(/\\/g, '|')
+                               .replace(/~/g, '^');
 };
 require('util').inherits(SoonTS6.Server, EventEmitter);
 module.exports = SoonTS6;
