@@ -120,6 +120,11 @@ SoonTS6.Server = function (options) {
          * Any further metadata about the IRCObj.
          */
         this.metadata = data.metadata || {};
+        /**
+         * The object's real host/IP.
+         */
+        this.realhost = String(data.realhost) || '';
+        this.realip = String(data.realip) || '';
         this.toString = function() {return data.name;};
         /**
          * (if service) Does the same as Server.send() but with the service's ID.
@@ -317,7 +322,9 @@ SoonTS6.Server = function (options) {
             host: host,
             ident: ident,
             desc: (gecos || name),
-            isService: true
+            isService: true,
+            realip: 0,
+            realhost: '*'
         });
         self.objs.push(o);
         self.send('EUID ' + name + ' 1 ' + o.ts + ' +' + o.modes.join('') + ' ' + ident + ' ' + host + ' 0 ' + options.sid + id + ' * * :' + (gecos || name));
@@ -388,7 +395,9 @@ SoonTS6.Server = function (options) {
                 modes: line.args[3].replace('+', '').split(''),
                 host: line.args[5],
                 ident: line.args[4],
-                desc: line.args[10]
+                desc: line.args[10],
+                realip: line.args[6],
+                realhost: line.args[8]
             }));
             self.log('burst: added user ' + line.args[0] + ' (' + line.args[3] + ') [' + line.args[4] + '@' + line.args[5] + '] with id ' + line.args[7] + ' (' + line.args[10] + ')');
         }
@@ -441,6 +450,8 @@ SoonTS6.Server = function (options) {
                 o.host = line.args[5];
                 o.ident = line.args[4];
                 o.desc = line.args[10];
+                o.realip = line.args[6];
+                o.realhost = line.args[8];
             }
             else {
                 self.log('euid: added user ' + line.args[0] + ' (' + line.args[3] + ') [' + line.args[4] + '@' + line.args[5] + '] with id ' + line.args[7] + ' (' + line.args[10] + ')');
@@ -451,7 +462,9 @@ SoonTS6.Server = function (options) {
                 modes: line.args[3].replace('+', '').split(''),
                 host: line.args[5],
                 ident: line.args[4],
-                desc: line.args[10]
+                desc: line.args[10],
+                realip: line.args[6],
+                realhost: line.args[8]
             }));
             }
         }
