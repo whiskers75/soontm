@@ -173,7 +173,7 @@ SoonTS6.Server = function (options) {
          */
         this.kill = function(uid, message) {
             if (!this.isService) throw new Error('Called service function on non-service IRCObj');
-            this.send('KILL ' + uid + ' :' + self.objs.findByAttr('id', uid) + ' (' + (message || '<No reason given>') + ')');
+            this.send('KILL ' + uid + ' :' + this.id + ' (' + (message || '<No reason given>') + ')');
         };
         /**
          * (if service) changes the host of a user
