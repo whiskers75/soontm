@@ -205,7 +205,7 @@ SoonTS6.Server = function (options) {
              * @param {string} oldhost - The old host.
              * @param {string} newhost - The new host.
              */
-            self.emit('chghost', o, oldhost, newhost);
+            self.emit('chghost', o, oldhost, host);
         };
         /**
          * (if service) Identifies a user with services.
@@ -601,7 +601,7 @@ SoonTS6.Server = function (options) {
              * @param {string} oldhost - The old host.
              * @param {string} newhost - The new host.
              */
-            self.emit('chghost', o, oldhost, newhost);
+            self.emit('chghost', o, oldhost, line.args[1]);
         }
         return;
     });
