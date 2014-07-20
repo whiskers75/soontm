@@ -303,7 +303,7 @@ SoonTS6.Server = function (options) {
             isService: true
         });
         self.objs.push(o);
-        self.send('EUID ' + name + ' 1 ' + (Date.now() / 100).toFixed(0) + ' +Sio ' + ident + ' ' + host + ' 0 ' + options.sid + id + ' * * :' + (gecos || name));
+        self.send('EUID ' + name + ' 1 ' + o.ts + ' +' + o.modes.join('') + ' ' + ident + ' ' + host + ' 0 ' + options.sid + id + ' * * :' + (gecos || name));
         return o;
     };
     // TS6 parser
