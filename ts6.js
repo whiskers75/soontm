@@ -528,6 +528,12 @@ SoonTS6.Server = function (options) {
             self.emit('nick', from, oldnick, newnick);
             self.log('NICK: IRCObj ' + oldnick + ' (' + line.id + ') -> ' + newnick);
         }
+        if (line.command === 'CHGHOST') {
+            var id = line.args[0];
+            var o = self.objs.findByAttr('id', id);
+            o.host = line.args[1];
+            self.log('CHGHOST IRCObj ' + o.name + ' (' + o.id + '): Host changed to ' + o.host);
+        }
         return;
     });
     this.send('PASS ' + options.pass + ' TS 6 :' + options.sid);
