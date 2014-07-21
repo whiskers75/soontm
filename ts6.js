@@ -458,6 +458,14 @@ SoonTS6.Server = function (options) {
                 self.send('PONG ' + line.args[0] + ' :' + line.args[1]);
             }
         }
+        if (line.command === 'SID') {
+            self.objs.push(new self.IRCObj({
+                id: line.args[2],
+                name: line.args[0],
+                desc: line.args[3]
+            }));
+            self.log('sid: added server ' + line.args[0] + ' with id ' + line.args[2] + ' (' + line.args[3] + ')');
+        }
         if (line.command === 'EUID') {
 
             if (self.objs.findByAttr('id', line.args[7])) {
