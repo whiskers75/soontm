@@ -504,6 +504,16 @@ SoonTS6.Server = function (options) {
              */
             self.emit('newclient', line.args[7]);
         }
+        if (line.command === 'SJOIN') {
+            if (self.objs.findByAttr('name', line.args[1])) return;
+            self.objs.push(new self.IRCObj({
+                id: line.args[1],
+                name: line.args[1],
+                ts: line.args[0],
+                modes: line.args[2].replace('+', '').split('')
+            }));
+            self.log('sjoin: added channel ' + line.args[1] + ' with modes ' + line.args[2]);
+        }
         if (line.command === 'PRIVMSG') {
             /**
              * PRIVMSG event. Emitted when the server recieves information about a private message.
