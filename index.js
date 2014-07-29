@@ -113,6 +113,10 @@ soontm.Client = function (options) {
      * List of capabilities to request.
      */
     this.capabilities = '';
+    /**
+     * Object keyed by channel name containing lists of users in a channel.
+     */
+    this.names = {};
     var self = this;
     /**
      * Send a raw IRC line.
@@ -419,7 +423,25 @@ soontm.Client = function (options) {
          * @property {string=} message - The part message that was given.
          * @property {object} line - The raw line data. See the line namespace.
          */
-        if (line.command === 'PART' && line.nick) { self.emit('part', line.nick, line.args[0], line.args[1], line); }
+        if (line.command === 'PART' && line.nick) {
+            if (line.args[1] && line.args[1].split(' ')[0] == 'requested' && line.args[1].split(' ')[1] == 'by') {
+                /**
+                 * REMOVE event - emitted for some ircds when someone (incl. client) is removed from the channel by use of the /remove command.
+                 *
+                 * @event remove
+                 * @memberof soontm.Client
+                 * @property {string} nick - The nickname that used /remove.
+                 * @property {string} channel - The channel that the client was removed from.
+                 * @property {string} target - The nickname that was removed.
+                 * @property {object} line - The raw line data. See the line namespace.
+                 */
+                var pmsg = line.args[1].split(' ');
+                self.emit('remove', pmsg[2], line.args[0], line.nick, line);
+            }
+            else {
+                self.emit('part', line.nick, line.args[0], line.args[1], line);
+            }
+        }
         /**
          * QUIT event. Emitted when a user leaves IRC.
          *
@@ -497,6 +519,20 @@ soontm.Client = function (options) {
             line.args[1].split(',').forEach(function (target) {
                 self.emit('rpl_monoffline', target, line);
             });
+        }
+        if (line.command === 'KICK') {
+            /**
+             * KICK - emitted when someone (incl. the client) gets kicked.
+             *
+             * @event kick
+             * @memberof soontm.Client
+             * @property {string} nick - The nickname that sent the kick.
+             * @property {string} channel - The channel that the target was kicked from.
+             * @property {string} target - The nickname that was kicked.
+             * @property {string=} message - The kick message.
+             * @property {object} line - The raw line data. See the line namespace.
+             */
+            self.emit('kick', line.nick, line.args[0], line.args[1], line.args[2], line);
         }
         /**
          * Raw event. Emitted on every properly-formatted IRC line.

@@ -1,7 +1,7 @@
 {
   "name": "soontm",
-  "version": "0.4.1",
-  "description": "The Soon (tm) IRC library, a welcome break from node-irc. Plus, it has no dependencies!",
+  "version": "0.5.0",
+  "description": "the simple, helpful, no-dependency node IRC library!",
   "main": "index.js",
   "scripts": {
     "test": "mocha -R spec test.js"

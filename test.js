@@ -228,3 +228,22 @@ it('should send correct AUTHENTICATE command when receiving \'AUTHENTICATE +\'',
     };
     client.rl.emit('line', 'AUTHENTICATE +');
 });
+it('should emit kick event when recieving KICK', function(done) {
+    client.once('kick', function (nick, channel, target, message, line) {
+        if (nick !== 'pls') { return done(new Error('failed to parse nick')); }
+        if (channel !== '#test') { return done(new Error('failed to parse channel')); }
+        if (target !== 'tonot') { return done(new Error('failed to parse target')); }
+        if (message !== 'pls to not do that') { return done(new Error('failed to parse message')); }
+        done();
+    });
+    client.rl.emit('line', ':pls!~test@testing/test KICK #test tonot :pls to not do that');
+});
+it('should emit remove event when recieving a PART message as a result of the /remove command', function(done) {
+    client.once('remove', function (nick, channel, target, message, line) {
+        if (nick !== 'tonot') { return done(new Error('failed to parse nick')); }
+        if (channel !== '#test') { return done(new Error('failed to parse channel')); }
+        if (target !== 'pls') { return done(new Error('failed to parse target')); }
+        done();
+    });
+    client.rl.emit('line', ':pls!~test@testing/test PART #test :requested by tonot (pls2not)');
+});
