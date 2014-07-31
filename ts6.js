@@ -302,7 +302,7 @@ SoonTS6.Server = function (options) {
      * @param {string} message - Message to log.
      */
     this.log = function(msg) {
-        self.send('ENCAP * SNOTE d :*** ' + msg);
+        self.send('ENCAP * SNOTE d :' + msg);
     };
     /**
      * Quit and disconnect from the other server.
