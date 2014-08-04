@@ -76,7 +76,8 @@ soontm.Client = function (options) {
          */
         this.sock = tls.connect({
             host: options.host,
-            port: options.port
+            port: options.port,
+            rejectUnauthorized: options.sloppy === undefined ? true : !options.sloppy
         });
     } else {
         this.sock = net.connect({
