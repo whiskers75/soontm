@@ -64,7 +64,7 @@ soontm.Client = function (options) {
         sasl: options.sasl || false,
         password: options.password || '',
         tls: options.tls || false,
-        version: options.version || 'soontm ' + pkg.version
+        version: options.version || 'soontm ' + pkg.version,
         debug: options.debug || false,
         channels: options.channels || [],
         sloppy: options.sloppy || false
