@@ -6,7 +6,7 @@ var net = require('net'),
     readline = require('readline'),
     tls = require('tls'),
     EventEmitter = require('events').EventEmitter,
-    package = require('package');
+    pkg = require('package');
 
 var soontm = {
     /**
@@ -64,7 +64,7 @@ soontm.Client = function (options) {
         sasl: options.sasl || false,
         password: options.password || '',
         tls: options.tls || false,
-        version: options.version || 'soontm ' + package.version
+        version: options.version || 'soontm ' + pkg.version
         debug: options.debug || false,
         channels: options.channels || [],
         sloppy: options.sloppy || false
