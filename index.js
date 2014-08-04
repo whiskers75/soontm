@@ -6,7 +6,7 @@ var net = require('net'),
     readline = require('readline'),
     tls = require('tls'),
     EventEmitter = require('events').EventEmitter,
-    pkg = require('package');
+    pkg = require('./package');
 
 var soontm = {
     /**
