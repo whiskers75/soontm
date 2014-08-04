@@ -5,7 +5,8 @@
 var net = require('net'),
     readline = require('readline'),
     tls = require('tls'),
-    EventEmitter = require('events').EventEmitter;
+    EventEmitter = require('events').EventEmitter,
+    package = require('package');
 
 var soontm = {
     /**
@@ -63,7 +64,7 @@ soontm.Client = function (options) {
         sasl: options.sasl || false,
         password: options.password || '',
         tls: options.tls || false,
-        version: options.version || 'soontm irc library by whiskers75',
+        version: options.version || 'soontm ' + package.version
         debug: options.debug || false,
         channels: options.channels || [],
         sloppy: options.sloppy || false
