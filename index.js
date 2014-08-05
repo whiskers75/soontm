@@ -56,7 +56,7 @@ var soontm = {
 soontm.Client = function (options) {
     options = {
         host: options.host,
-        port: options.port || (options.tls ? 6697 : 6667),
+        port: options.port || (options.tls ? 994 : 194),
         nick: options.nick,
         user: options.user || options.nick,
         ident: options.ident || options.user || options.nick,
