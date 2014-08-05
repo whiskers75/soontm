@@ -114,7 +114,7 @@ soontm.Client = function (options) {
     /*
      * List of capabilities to request.
      */
-    this.capabilities = '';
+    this.capabilities = [];
     /**
      * Object keyed by channel name containing lists of users in a channel.
      */
@@ -275,19 +275,21 @@ soontm.Client = function (options) {
         if (line.command === 'CAP') {
             if (line.args[1] === 'LS') {
                 if (line.args[2].indexOf('away-notify') !== -1) {
-                    self.capabilities += 'away-notify ';
+                    self.capabilities.push('away-notify');
                 }
                 if (line.args[2].indexOf('account-notify') !== -1 && line.args[2].indexOf('extended-join') !== -1) {
-                    self.capabilities += 'extended-join account-notify ';
+                    self.capabilities.push('extended-join');
+                    self.capabilities.push('account-notify');
                 }
                 if (line.args[2].indexOf('multi-prefix') !== -1) {
-                    self.capabilities += 'multi-prefix ';
+                    self.capabilities.push('multi-prefix');
                 }
                 if (options.sasl && options.password && line.args[2].indexOf('sasl') !== -1) {
                     if (!options.tls && !options.sloppy) { self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ')); }
-                    self.capabilities += 'sasl ';
+                    self.capabilities.push('sasl');
                 }
-                self.send('CAP REQ :' + self.capabilities);
+                self.send('CAP REQ :' + self.capabilities.join(' '));
+                if (options.debug) { console.log('IRCv3 CLICAP: requested ' + self.capabilities.join(' ')); }
             }
             if (line.args[1] === 'ACK') {
                 if (line.args[2].indexOf('sasl') !== -1) {
