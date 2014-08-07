@@ -5,7 +5,8 @@
 var net = require('net'),
     readline = require('readline'),
     tls = require('tls'),
-    EventEmitter = require('events').EventEmitter;
+    EventEmitter = require('events').EventEmitter,
+    pkg = require('./package');
 
 var soontm = {
     /**
@@ -58,7 +59,7 @@ var soontm = {
 soontm.Client = function(options) {
     options = {
         host: options.host,
-        port: options.port,
+        port: options.port || (options.tls ? 6697 : 6667),
         nick: options.nick,
         user: options.user || options.nick,
         ident: options.ident || options.user || options.nick,
@@ -66,7 +67,7 @@ soontm.Client = function(options) {
         sasl: options.sasl || false,
         password: options.password || '',
         tls: options.tls || false,
-        version: options.version || 'Soon™ IRC for Node.js running on ' + require('os').version + ' - https://github.com/whiskers75/soontm',
+        version: options.version || 'Soon™ IRC ' + pkg.version + ' for Node.js running on ' + require('os').version + ' - https://github.com/whiskers75/soontm',
         debug: options.debug || false,
         channels: options.channels || [],
         sloppy: options.sloppy || false,
@@ -80,7 +81,8 @@ soontm.Client = function(options) {
          */
         this.sock = tls.connect({
             host: options.host,
-            port: options.port
+            port: options.port,
+            rejectUnauthorized: options.sloppy === undefined ? true : !options.sloppy
         });
     } else {
         this.sock = net.connect({
@@ -116,7 +118,7 @@ soontm.Client = function(options) {
     /**
      * List of capabilities to request.
      */
-    this.capabilities = '';
+    this.capabilities = [];
     /**
      * Object keyed by channel name containing lists of users in a channel.
      */
@@ -305,21 +307,21 @@ soontm.Client = function(options) {
         if (line.command === 'CAP') {
             if (line.args[1] === 'LS') {
                 if (line.args[2].indexOf('away-notify') !== -1) {
-                    self.capabilities += 'away-notify ';
+                    self.capabilities.push('away-notify');
                 }
                 if (line.args[2].indexOf('account-notify') !== -1 && line.args[2].indexOf('extended-join') !== -1) {
-                    self.capabilities += 'extended-join account-notify ';
+                    self.capabilities.push('extended-join');
+                    self.capabilities.push('account-notify');
                 }
                 if (line.args[2].indexOf('multi-prefix') !== -1) {
-                    self.capabilities += 'multi-prefix ';
+                    self.capabilities.push('multi-prefix');
                 }
                 if (options.sasl && options.password && line.args[2].indexOf('sasl') !== -1) {
-                    if (!options.tls && !options.sloppy) {
-                        self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
-                    }
-                    self.capabilities += 'sasl ';
+                    if (!options.tls && !options.sloppy) { self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ')); }
+                    self.capabilities.push('sasl');
                 }
-                self.send('CAP REQ :' + self.capabilities);
+                self.send('CAP REQ :' + self.capabilities.join(' '));
+                if (options.debug) { console.log('IRCv3 CLICAP: requested ' + self.capabilities.join(' ')); }
             }
             if (line.args[1] === 'ACK') {
                 if (line.args[2].indexOf('sasl') !== -1) {
