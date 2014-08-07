@@ -14,8 +14,10 @@ var soontm = {
      * @param {string} type - Type of the message (e.g. ACTION, PING, VERSION).
      * @param {string} text - Parameters to the message.
      */
-    makeCtcp: function (type, text) {
-        if (!text) { return '\u0001' + type + '\u0001'; }
+    makeCtcp: function(type, text) {
+        if (!text) {
+            return '\u0001' + type + '\u0001';
+        }
         return '\u0001' + type + ' ' + text + '\u0001';
     },
 
@@ -26,7 +28,7 @@ var soontm = {
      *
      * @param {string} string - nick or channel name to lowercase
      */
-    toLowerCase: function (string) {
+    toLowerCase: function(string) {
         return string.toLowerCase().replace(/\[/g, '{')
             .replace(/\]/g, '}')
             .replace(/\\/g, '|')
@@ -50,9 +52,10 @@ var soontm = {
  * @param {string} options.version - A custom CTCP VERSION reply.
  * @param {boolean=} options.debug - Whether to log protocol debug messages.
  * @param {array=} options.channels - Array of channels to autojoin.
- * @param {boolean=} options.sloppy - Whether to care about security.
+ * @param {boolean=} options.sloppy - Enable this if you have errors about security.
+ * @param {boolean=} options.enableNames - Enable experimental name tracking support.
  */
-soontm.Client = function (options) {
+soontm.Client = function(options) {
     options = {
         host: options.host,
         port: options.port,
@@ -63,10 +66,11 @@ soontm.Client = function (options) {
         sasl: options.sasl || false,
         password: options.password || '',
         tls: options.tls || false,
-        version: options.version || 'soontm irc library by whiskers75',
+        version: options.version || 'Soon™ IRC for Node.js running on ' + require('os').version + ' - https://github.com/whiskers75/soontm',
         debug: options.debug || false,
         channels: options.channels || [],
-        sloppy: options.sloppy || false
+        sloppy: options.sloppy || false,
+        enableNames: options.enableNames || false
     };
     if (options.tls) {
         /**
@@ -97,7 +101,7 @@ soontm.Client = function (options) {
      * Indicates whether the client is connected.
      */
     this.connected = false;
-    /*
+    /**
      * Object mapping nicknames to accountnames.
      *
      * @example
@@ -105,11 +109,11 @@ soontm.Client = function (options) {
      */
     this.accounts = {};
     this.awaystatus = {};
-    /*
+    /**
      * Indicates whether away notify is enabled.
      */
     this.awaynotify = false;
-    /*
+    /**
      * List of capabilities to request.
      */
     this.capabilities = '';
@@ -117,6 +121,12 @@ soontm.Client = function (options) {
      * Object keyed by channel name containing lists of users in a channel.
      */
     this.names = {};
+    /**
+     * Internal object used for name buffering.
+     * 
+     * @private
+     */
+    this._nameBuffer = {};
     var self = this;
     /**
      * Send a raw IRC line.
@@ -127,7 +137,9 @@ soontm.Client = function (options) {
      */
     this.send = function send(line) {
         line = line.replace(/\r?\n|\r/g, '');
-        if (options.debug) { console.log('<<< ' + line); }
+        if (options.debug) {
+            console.log('<<< ' + line);
+        }
         self.sock.write(line + '\r\n');
     };
     /**
@@ -136,9 +148,9 @@ soontm.Client = function (options) {
      * @param {string} target - Person or channel to message.
      * @param {string} message - Message to send.
      */
-    this.privmsg = function (target, message) {
+    this.privmsg = function(target, message) {
         message = message.replace(/\r?\n|\r/g, '\n');
-        message.split('\n').forEach(function (bit) {
+        message.split('\n').forEach(function(bit) {
             self.send('PRIVMSG ' + target + ' :' + bit);
         });
     };
@@ -149,7 +161,7 @@ soontm.Client = function (options) {
      * @param {string} type - Type of message (e.g. ACTION, PING, VERSION).
      * @param {string} text - Parameters to the message.
      */
-    this.ctcp = function (target, type, text) {
+    this.ctcp = function(target, type, text) {
         self.privmsg(target, soontm.makeCtcp(type, text));
     };
     /**
@@ -158,7 +170,7 @@ soontm.Client = function (options) {
      * @param {string} target - Person or channel to message.
      * @param {string} message - Message to send.
      */
-    this.action = function (target, message) {
+    this.action = function(target, message) {
         self.ctcp(target, 'ACTION', message);
     };
     /**
@@ -167,7 +179,7 @@ soontm.Client = function (options) {
      * @param {string} target - Person or channel to notice.
      * @param {string} message - Notice to send.
      */
-    this.notice = function (target, message) {
+    this.notice = function(target, message) {
         self.send('NOTICE ' + target + ' :' + message);
     };
     /**
@@ -177,7 +189,7 @@ soontm.Client = function (options) {
      * @param {string} type - Type of message (e.g. ACTION, PING, VERSION).
      * @param {string} text - Parameters to the message.
      */
-    this.ctcpReply = function (target, type, text) {
+    this.ctcpReply = function(target, type, text) {
         self.notice(target, soontm.makeCtcp(type, text));
     };
     /**
@@ -185,7 +197,7 @@ soontm.Client = function (options) {
      *
      * @param {string} target - Channel to join.
      */
-    this.join = function (target) {
+    this.join = function(target) {
         self.send('JOIN ' + target);
     };
     /**
@@ -193,17 +205,31 @@ soontm.Client = function (options) {
      * @param {string} target - Channel to part.
      * @param {string=} message - Part message.
      */
-    this.part = function (target, message) {
-        if (!message) { message = ''; }
+    this.part = function(target, message) {
+        if (!message) {
+            message = '';
+        }
         self.send('PART ' + target + ' :' + message);
     };
+    /**
+     * Request a list of names and modes for a channel. The result will be emitted in a rpl_endofnames event.
+     * options.enableNames must be set to true for this to work.
+     * 
+     * @param {string} target - Channel to request names for.
+     */
+     this.names = function(target) {
+         if (!options.enableNames) {return self.emit('error', new Error('names() called when names support was not enabled'))}
+         self.send('NAMES ' + target);
+     };
     /**
      * Quit and disconnect from the IRC server. (After this, you may want to exit. Reconnection isn't currently possible.)
      *
      * @param {string=} message - Quit message.
      */
-    this.quit = function (message) {
-        if (!message) { message = ''; }
+    this.quit = function(message) {
+        if (!message) {
+            message = '';
+        }
         self.send('QUIT :' + message);
     };
     /**
@@ -211,8 +237,10 @@ soontm.Client = function (options) {
      */
     this.raw = new EventEmitter();
     // IRC parser bit
-    this.rl.on('line', function (rawLine) {
-        var line = {tokens: String(rawLine).split(' ')}, i;
+    this.rl.on('line', function(rawLine) {
+        var line = {
+            tokens: String(rawLine).split(' ')
+        }, i;
 
         if (line.tokens[0][0] === ':') {
             line.prefix = line.tokens[0].replace(':', '');
@@ -258,7 +286,9 @@ soontm.Client = function (options) {
                 line.status = self.awaystatus[line.nick];
             }
         }
-        if (options.debug) { console.log('>>> ' + rawLine); }
+        if (options.debug) {
+            console.log('>>> ' + rawLine);
+        }
         if (line.command === '001') {
             /**
              * Event emitted when the client connects.
@@ -268,7 +298,9 @@ soontm.Client = function (options) {
              */
             self.emit('registered');
             self.connected = true;
-            if (options.channels) { options.channels.forEach(self.join); }
+            if (options.channels) {
+                options.channels.forEach(self.join);
+            }
         }
         if (line.command === 'CAP') {
             if (line.args[1] === 'LS') {
@@ -282,7 +314,9 @@ soontm.Client = function (options) {
                     self.capabilities += 'multi-prefix ';
                 }
                 if (options.sasl && options.password && line.args[2].indexOf('sasl') !== -1) {
-                    if (!options.tls && !options.sloppy) { self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ')); }
+                    if (!options.tls && !options.sloppy) {
+                        self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
+                    }
                     self.capabilities += 'sasl ';
                 }
                 self.send('CAP REQ :' + self.capabilities);
@@ -298,31 +332,41 @@ soontm.Client = function (options) {
             if (line.args[1] === 'NAK') {
                 self.emit('error', new Error('Capability negotiation failed.'));
             }
-            if (!options.sasl) { self.send('CAP END'); }
+            if (!options.sasl) {
+                self.send('CAP END');
+            }
         }
         if (line.command === '904' || line.command === '905') {
             self.emit('error', new Error('SASL authentication failed.'));
             self.send('CAP END');
         }
         if (line.command === '903') {
-            if (options.debug) { console.log('SASL successful!'); }
+            if (options.debug) {
+                console.log('SASL successful!');
+            }
             self.send('CAP END');
         }
         if (line.command === '354') {
             if (self.awaynotify) {
                 // a WHOX reply, we're assuming it's %nfa
                 self.awaystatus[line.args[1]] = line.args[2].split('')[0];
-                if (line.args[3] === '0') { return delete self.accounts[line.args[1]]; }
+                if (line.args[3] === '0') {
+                    return delete self.accounts[line.args[1]];
+                }
                 self.accounts[line.args[1]] = line.args[3];
             } else {
                 // a WHOX reply, we're assuming it's %na
-                if (line.args[2] === '0') { return delete self.accounts[line.args[1]]; }
+                if (line.args[2] === '0') {
+                    return delete self.accounts[line.args[1]];
+                }
                 self.accounts[line.args[1]] = line.args[2];
             }
         }
         if (line.command === 'ACCOUNT') {
             // account-notify CAP extension
-            if (line.args[0] === '*') { return delete self.accounts[line.nick]; }
+            if (line.args[0] === '*') {
+                return delete self.accounts[line.nick];
+            }
             self.accounts[line.nick] = line.args[0];
         }
         if (line.command === 'AWAY') {
@@ -437,8 +481,7 @@ soontm.Client = function (options) {
                  */
                 var pmsg = line.args[1].split(' ');
                 self.emit('remove', pmsg[2], line.args[0], line.nick, line);
-            }
-            else {
+            } else {
                 self.emit('part', line.nick, line.args[0], line.args[1], line);
             }
         }
@@ -451,7 +494,9 @@ soontm.Client = function (options) {
          * @property {string} message - The quit message that was given.
          * @property {object} line - The raw line data. See the line namespace.
          */
-        if (line.command === 'QUIT' && line.nick) { self.emit('quit', line.nick, line.args[0], line); }
+        if (line.command === 'QUIT' && line.nick) {
+            self.emit('quit', line.nick, line.args[0], line);
+        }
         /**
          * Invite event. Emitted when the client recieves an /invite.
          *
@@ -461,7 +506,9 @@ soontm.Client = function (options) {
          * @property {string} channel - The channel you are being invited to.
          * @property {object} line - The raw line data. See the line namespace.
          */
-        if (line.command === 'INVITE') { self.emit('invite', line.nick, line.args[1], line); }
+        if (line.command === 'INVITE') {
+            self.emit('invite', line.nick, line.args[1], line);
+        }
         /**
          * RPL_TOPIC - emitted when the client recieves a topic reply.
          *
@@ -471,7 +518,9 @@ soontm.Client = function (options) {
          * @property {string} channel - The channel of which you're getting a topic for
          * @property {string} topic - The topic itself.
          */
-        if (line.command === '332') { self.emit('rpl_topic', line.args[1], line.args[2]); }
+        if (line.command === '332') {
+            self.emit('rpl_topic', line.args[1], line.args[2]);
+        }
         /**
          * TOPIC - emitted when the client receives a topic change.
          *
@@ -481,7 +530,9 @@ soontm.Client = function (options) {
          * @property {string} channel - The channel where the topic is changed.
          * @property {string} topic - The topic itself.
          */
-        if (line.command === 'TOPIC') { self.emit('topic', line.nick, line.args[0], line.args[1]); }
+        if (line.command === 'TOPIC') {
+            self.emit('topic', line.nick, line.args[0], line.args[1]);
+        }
         /**
          * WALLOPS - emitted when a wallops is received.
          *
@@ -491,7 +542,9 @@ soontm.Client = function (options) {
          * @property {string} message - The wallops that was sent.
          * @property {object} line - The raw line data. See the line namespace.
          */
-        if (line.command === 'WALLOPS') { self.emit('wallops', line.nick, line.args[0], line); }
+        if (line.command === 'WALLOPS') {
+            self.emit('wallops', line.nick, line.args[0], line);
+        }
         /**
          * RPL_MONONLINE - emitted when the client receives the 730 numeric
          *
@@ -503,7 +556,7 @@ soontm.Client = function (options) {
          * @property {object} line - The raw line data. See the line namespace.
          */
         if (line.command === '730') {
-            line.args[1].split(',').forEach(function (target) {
+            line.args[1].split(',').forEach(function(target) {
                 self.emit('rpl_mononline', target.split('@')[0].split('!')[0], target.split('@')[0].split('!')[1], target.split('@')[1], line);
             });
         }
@@ -516,7 +569,7 @@ soontm.Client = function (options) {
          * @property {object} line - The raw line data. See the line namespace.
          */
         if (line.command === '731') {
-            line.args[1].split(',').forEach(function (target) {
+            line.args[1].split(',').forEach(function(target) {
                 self.emit('rpl_monoffline', target, line);
             });
         }
@@ -534,6 +587,40 @@ soontm.Client = function (options) {
              */
             self.emit('kick', line.nick, line.args[0], line.args[1], line.args[2], line);
         }
+        if (line.command === '353' && options.enableNames) {
+            // RPL_NAMES
+            if (!self._nameBuffer[line.args[2]]) {self._nameBuffer[line.args[2]] = {};}
+            var namelist = line.args[3].split(' '); // Get the list of names
+            namelist.forEach(function(name) {
+                var modes = '';
+                var finalname = '';
+                name.split('').forEach(function(char) { // Split the name up into characters and read from the front to see if there are any prefixes
+                    if ('~!@%+'.indexOf(char) != -1) { // TODO: Read this from the PREFIX value in RPL_ISUPPORT
+                        modes += char; // It's a mode, add it to the list
+                    }
+                    else {
+                        finalname += char; // Part of the name
+                    }
+                });
+                self._nameBuffer[line.args[2]][finalname] = modes;
+            });
+        }
+        if (line.command === '366' && options.enableNames) {
+            // RPL_ENDOFNAMES
+            if (!self._nameBuffer[line.args[1]]) {return self.emit('error', new Error('Names support: Failed to buffer up list of names!'));}
+            /**
+             * RPL_ENDOFNAMES event. Emitted when the client has just recieved a /names reply from the server.
+             * options.enableNames must be set to true for this to work.
+             * 
+             * @event rpl_endofnames
+             * @memberof soontm.Client
+             * @property {object} names - An object of names, keyed like this: {"name": "+", "someop": "@"}
+             * @property {string} channel - The channel being referred to.
+             * @property {object} line - The raw line data. See the line namespace.
+             */
+             self.emit('rpl_endofnames', self._nameBuffer[line.args[1]], line.args[1], line);
+             delete self._nameBuffer[line.args[1]];
+        }
         /**
          * Raw event. Emitted on every properly-formatted IRC line.
          * Replace '???' with the IRC command or numeric.
@@ -549,7 +636,9 @@ soontm.Client = function (options) {
         return this;
     });
     if (!options.sasl && options.password) {
-        if (!options.tls && !options.sloppy) { self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ')); }
+        if (!options.tls && !options.sloppy) {
+            self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ'));
+        }
         this.send('PASS ' + options.password);
     }
     this.send('CAP LS');

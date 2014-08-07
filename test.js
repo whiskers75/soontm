@@ -2,7 +2,7 @@
 /*global it*/
 'use strict';
 var soontm = require('./index');
-var client = new soontm.Client({host: 'test.net', port: 6667, nick: 'testing', sasl: true, user: 'testing', password: 'testing', sloppy: true});
+var client = new soontm.Client({host: 'test.net', port: 6667, nick: 'testing', sasl: true, user: 'testing', password: 'testing', sloppy: true, enableNames: true});
 client.send = function () { return; };
 client.rl.emit('line', ':test.net CAP * LS :account-notify away-notify extended-join multi-prefix sasl tls');
 client.rl.emit('line', ':test.net CAP * ACK :account-notify away-notify extended-join multi-prefix');
@@ -246,4 +246,15 @@ it('should emit remove event when recieving a PART message as a result of the /r
         done();
     });
     client.rl.emit('line', ':pls!~test@testing/test PART #test :requested by tonot (pls2not)');
+});
+it('should parse names correctly and emit rpl_endofnames at the end of it', function(done) {
+    client.once('rpl_endofnames', function(names, chan, line) {
+        if (names.person !== '@') { return done(new Error('failed to parse opped person on first line')); }
+        if (names.otherlineguy !== '') { return done(new Error('failed to parse person on second line')); }
+        if (chan != '#chan') { return done(new Error('failed to parse chan')); }
+        done();
+    });
+    client.rl.emit('line', ':test.net 353 you * #chan :@person +voicedguy anotherguy');
+    client.rl.emit('line', ':test.net 353 you * #chan :otherlineguy');
+    client.rl.emit('line', ':test.net 366 you #chan :End of /NAMES list.');
 });
