@@ -1,6 +1,6 @@
 {
   "name": "soontm",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "the simple, helpful, no-dependency node IRC library!",
   "main": "index.js",
   "scripts": {
