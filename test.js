@@ -5,7 +5,7 @@ var soontm = require('./index');
 var client = new soontm.Client({host: 'test.net', port: 6667, nick: 'testing', sasl: true, user: 'testing', password: 'testing', sloppy: true, enableNames: true});
 client.send = function () { return; };
 client.rl.emit('line', ':test.net CAP * LS :account-notify away-notify extended-join multi-prefix sasl tls');
-client.rl.emit('line', ':test.net CAP * ACK :account-notify away-notify extended-join multi-prefix');
+client.rl.emit('line', ':test.net CAP * ACK :account-notify away-notify extended-join multi-prefix sasl');
 it('should emit registered on 001', function (done) {
     client.once('registered', done);
     client.rl.emit('line', ':test.net 001 testing :Testing\r\n');
