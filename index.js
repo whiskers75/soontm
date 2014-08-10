@@ -240,12 +240,29 @@ soontm.Client = function(options) {
     this.raw = new EventEmitter();
     // IRC parser bit
     this.rl.on('line', function(rawLine) {
-        var line = {
-            tokens: String(rawLine).split(' ')
-        }, i;
+        var line, i;
+
+        line = {
+            tokens: rawLine.split(' '),
+            tags: {}
+        };
+
+        if (line.tokens[0][0] === '@') {
+            line.tokens[0].slice(1).split(';').forEach(function (pair) {
+                var parts = pair.split('=', 2);
+
+                if (parts.length == 1) {
+                    line.tags[parts[0]] = '';
+                } else {
+                    line.tags[parts[0]] = parts[1];
+                }
+            });
+
+            line.tokens.shift();
+        }
 
         if (line.tokens[0][0] === ':') {
-            line.prefix = line.tokens[0].replace(':', '');
+            line.prefix = line.tokens[0].slice(1);
             line.tokens.shift();
         } else {
             line.prefix = '';
