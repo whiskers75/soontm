@@ -302,7 +302,7 @@ soontm.Client = function(options) {
                 line.account = self.accounts[line.nick];
             }
             if (self.awaynotify && self.awaystatus[line.nick]) {
-                line.status = self.awaystatus[line.nick];
+                line.away = self.awaystatus[line.nick];
             }
         }
         if (line.prefix.indexOf('@') === -1 && line.prefix.indexOf('!') === -1) {
@@ -373,7 +373,11 @@ soontm.Client = function(options) {
         if (line.command === '354') {
             if (self.awaynotify) {
                 // a WHOX reply, we're assuming it's %nfa
-                self.awaystatus[line.args[1]] = line.args[2].split('')[0];
+                if (line.args[2].split('')[0] === 'G') {
+                    self.awaystatus[line.args[1]] = true;
+                } else {
+                    delete self.awaystatus[line.args[1]];
+                }
                 if (line.args[3] === '0') {
                     return delete self.accounts[line.args[1]];
                 }
@@ -396,9 +400,9 @@ soontm.Client = function(options) {
         if (line.command === 'AWAY') {
             // away-notify CAP extension
             if (line.args[0]) {
-                self.awaystatus[line.nick] = 'G';
+                self.awaystatus[line.nick] = true;
             } else {
-                self.awaystatus[line.nick] = 'H';
+                delete self.awaystatus[line.nick];
             }
         }
         if (line.command === 'PING') {

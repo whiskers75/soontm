@@ -188,33 +188,33 @@ it('should emit rpl_topic on 332', function (done) {
     });
     client.rl.emit('line', ':test.net 332 testing #testchan :test /topic');
 });
-it('should set away status to H when receiving a WHOX reply with the H status', function (done) {
+it('should set remove line.away when receiving a WHOX reply with the H status', function (done) {
     client.once('privmsg', function (nick, channel, message, line) {
-        if (line.status !== 'H') { return done(new Error('failed to set H status')); }
+        if (line.away) { return done(new Error('failed to set line.away correctly')); }
         done();
     });
     client.rl.emit('line', ':test.net 354 testing here H*@ 0');
     client.rl.emit('line', ':here!~test@testing/test PRIVMSG #testchan :testing is great!');
 });
-it('should set away status to G when receiving a WHOX reply with the G status', function (done) {
+it('should set line.away to true when receiving a WHOX reply with the G status', function (done) {
     client.once('privmsg', function (nick, channel, message, line) {
-        if (line.status !== 'G') { return done(new Error('failed to set G status')); }
+        if (line.away !== true) { return done(new Error('failed to set line.away correctly')); }
         done();
     });
     client.rl.emit('line', ':test.net 354 testing gone G*@ 0');
     client.rl.emit('line', ':gone!~test@testing/test PRIVMSG #testchan :testing is great!');
 });
-it('should set away status to H when receiving AWAY without arguments', function (done) {
+it('should remove line.away when receiving AWAY without arguments', function (done) {
     client.once('privmsg', function (nick, channel, message, line) {
-        if (line.status !== 'H') { return done(new Error('failed to set H status')); }
+        if (line.away) { return done(new Error('failed to set line.away correctly')); }
         done();
     });
     client.rl.emit('line', ':here!~test@testing/test AWAY');
     client.rl.emit('line', ':here!~test@testing/test PRIVMSG #testchan :testing is great!');
 });
-it('should set away status to G when receiving AWAY with message', function (done) {
+it('should set line.away to true when receiving AWAY with message', function (done) {
     client.once('privmsg', function (nick, channel, message, line) {
-        if (line.status !== 'G') { return done(new Error('failed to set G status')); }
+        if (line.away !== true) { return done(new Error('failed to set line.away correctly')); }
         done();
     });
     client.rl.emit('line', ':gone!~test@testing/test AWAY :gone');
