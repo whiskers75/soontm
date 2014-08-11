@@ -220,7 +220,9 @@ soontm.Client = function(options) {
      * @param {string} target - Channel to request names for.
      */
      this.names = function(target) {
-         if (!options.enableNames) {return self.emit('error', new Error('names() called when names support was not enabled'))}
+         if (!options.enableNames) {
+             return self.emit('error', new Error('names() called when names support was not enabled'));
+         }
          self.send('NAMES ' + target);
      };
     /**
@@ -233,6 +235,19 @@ soontm.Client = function(options) {
             message = '';
         }
         self.send('QUIT :' + message);
+    };
+    /**
+     * Query or change the topic of a channel.
+     *
+     * @parwm {string} channel - The channel to query or change the topic of.
+     * @param {string=} message - The new topic. An empty string unsets the topic.
+     */
+    this.topic = function (channel, topic) {
+        if (topic === null || topic === undefined) {
+            self.send('TOPIC ' + channel);
+        } else {
+            self.send('TOPIC ' + channel + ':' + topic);
+        }
     };
     /**
      * Stream of raw data. See the '???' event for more details.
