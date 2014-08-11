@@ -359,11 +359,10 @@ soontm.Client = function(options) {
                 if (line.args[2].indexOf('away-notify') !== -1) {
                     self.awaynotify = true;
                 }
+                if (!options.sasl) self.send('CAP END');
             }
             if (line.args[1] === 'NAK') {
                 self.emit('error', new Error('Capability negotiation failed.'));
-            }
-            if (!options.sasl) {
                 self.send('CAP END');
             }
         }
