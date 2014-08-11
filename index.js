@@ -469,6 +469,13 @@ soontm.Client = function(options) {
         if (line.command === 'AUTHENTICATE' && line.args[0] === '+') {
             self.send('AUTHENTICATE ' + new Buffer(options.user + '\u0000' + options.user + '\u0000' + options.password).toString('base64'));
         }
+        if (line.command === '432' ||
+                line.command === '433' ||
+                line.command === '435' ||
+                line.command === '437') {
+            var nicklen = self.isupport.NICKLEN || 9;
+            self.nick(self.options.nick.slice(0, nicklen - 1) + '-');
+        }
         /**
          * Nick event.
          *
