@@ -280,3 +280,15 @@ it('should handle basic RPL_ISUPPORT correctly', function(done) {
     }
     done();
 });
+it('should emit nick event when receiving a NICK message', function (done) {
+    client.once('nick', function (oldNick, newNick, line) {
+        if (oldNick !== 'foo') {
+            return done(new Error('failed to parse old nick'));
+        }
+        if (newNick !== 'bar') {
+            return done(new Error('failed to parse new nick'));
+        }
+        done();
+    });
+    client.rl.emit('line', ':foo!~test@testing/test NICK bar');
+});

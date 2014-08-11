@@ -470,6 +470,21 @@ soontm.Client = function(options) {
             self.send('AUTHENTICATE ' + new Buffer(options.user + '\u0000' + options.user + '\u0000' + options.password).toString('base64'));
         }
         /**
+         * Nick event.
+         *
+         * @event nick
+         * @memberof soontm.Client
+         * @property {string} oldNick - The old nickname.
+         * @property {string} newNick - The new nickname.
+         * @property {object} line - The raw line data. See the line namespace.
+         */
+        if (line.command === 'NICK') {
+            if (line.nick === self.options.nick) {
+                self.options.nick = line.args[0];
+            }
+            self.emit('nick', line.nick, line.args[0], line);
+        }
+        /**
          * Message event.
          *
          * @event privmsg
