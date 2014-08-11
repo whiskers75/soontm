@@ -335,7 +335,10 @@ soontm.Client = function(options) {
                 if (line.args[2].indexOf('away-notify') !== -1) {
                     self.capabilities.push('away-notify');
                 }
-                if (line.args[2].indexOf('account-notify') !== -1 && line.args[2].indexOf('extended-join') !== -1) {
+                if (line.args[2].indexOf('account-tag') !== -1) {
+                    self.capabilities.push('account-tag');
+                }
+                if (line.args[2].indexOf('account-notify') !== -1 && line.args[2].indexOf('extended-join') !== -1 && self.capabilities.indexOf('account-tag') === -1) {
                     self.capabilities.push('extended-join');
                     self.capabilities.push('account-notify');
                 }
