@@ -250,7 +250,19 @@ soontm.Client = function(options) {
         }
     };
     /**
+     * Query or change the nickname of the bot.
+     *
+     * @param {string=} nick - The new nickname.
+     */
+    this.nick = function (nick) {
+        if (!nick) {
+            return self.options.nick;
+        }
+        self.send('NICK ' + nick);
+    };
+    /**
      * Stream of raw data. See the '???' event for more details.
+     *
      */
     this.raw = new EventEmitter();
     // IRC parser bit
