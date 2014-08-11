@@ -302,7 +302,7 @@ soontm.Client = function(options) {
             line.nick = line.prefix.split('!')[0];
             line.ident = line.prefix.split('@')[0].split('!')[1];
             line.host = line.prefix.split('@')[1];
-            if (self.accounts[line.nick]) {
+            if (self.accounts[line.nick] && !line.account) {
                 line.account = self.accounts[line.nick];
             }
             if (self.awaynotify && self.awaystatus[line.nick]) {
