@@ -261,6 +261,10 @@ soontm.Client = function(options) {
             line.tokens.shift();
         }
 
+        if (line.tags.account) {
+            line.account = line.tags.account;
+        }
+
         if (line.tokens[0][0] === ':') {
             line.prefix = line.tokens[0].slice(1);
             line.tokens.shift();
