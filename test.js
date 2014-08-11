@@ -6,6 +6,23 @@ var client = new soontm.Client({host: 'test.net', port: 6667, nick: 'testing', s
 client.send = function () { return; };
 client.rl.emit('line', ':test.net CAP * LS :account-notify away-notify extended-join multi-prefix sasl tls');
 client.rl.emit('line', ':test.net CAP * ACK :account-notify away-notify extended-join multi-prefix sasl');
+it('should send correct AUTHENTICATE command when receiving \'AUTHENTICATE +\'', function (done) {
+    client.send = function (msg) {
+        if (msg !== 'AUTHENTICATE dGVzdGluZwB0ZXN0aW5nAHRlc3Rpbmc=') { return done(new Error('failed to reply exactly (got ' + msg + ')')); }
+        done();
+        client.send = function () { return; };
+    };
+    client.rl.emit('line', 'AUTHENTICATE +');
+});
+it('should send CAP END on 903', function (done) {
+    client.rl.emit('line', ':test.net 900 testing testing!~testing@127.0.0.1 testing :You are now logged in as testing');
+    client.send = function (msg) {
+        if (msg !== 'CAP END') return done(new Error('failed to reply exactly (got ' + msg + ')'));
+        done();
+        client.send = function () { return; };
+    }
+    client.rl.emit('line', ':test.net 903 testing :SASL authentication successful');
+});
 it('should emit registered on 001', function (done) {
     client.once('registered', done);
     client.rl.emit('line', ':test.net 001 testing :Testing\r\n');
@@ -219,14 +236,6 @@ it('should set line.away to true when receiving AWAY with message', function (do
     });
     client.rl.emit('line', ':gone!~test@testing/test AWAY :gone');
     client.rl.emit('line', ':gone!~test@testing/test PRIVMSG #testchan :testing is great!');
-});
-it('should send correct AUTHENTICATE command when receiving \'AUTHENTICATE +\'', function (done) {
-    client.send = function (msg) {
-        if (msg !== 'AUTHENTICATE dGVzdGluZwB0ZXN0aW5nAHRlc3Rpbmc=') { return done(new Error('failed to reply exactly (got ' + msg + ')')); }
-        done();
-        client.send = function () { return; };
-    };
-    client.rl.emit('line', 'AUTHENTICATE +');
 });
 it('should emit kick event when recieving KICK', function(done) {
     client.once('kick', function (nick, channel, target, message, line) {
