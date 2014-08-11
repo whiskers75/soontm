@@ -73,6 +73,8 @@ soontm.Client = function(options) {
         sloppy: options.sloppy || false,
         enableNames: options.enableNames || false
     };
+    this.isupport = {};
+    this.options = options;
     if (options.tls) {
         /**
          * Raw IRC socket. NEVER USE THIS! Use send() instead.
@@ -357,6 +359,23 @@ soontm.Client = function(options) {
             if (options.channels) {
                 options.channels.forEach(self.join);
             }
+        }
+        if (line.command === '005') {
+            line.args.forEach(function (arg) {
+                var tokens = arg.split('='),
+                    name = tokens[0],
+                    value = tokens.slice(1).join('=');
+
+                if (value.indexOf('.') === -1 && !isNaN(Number(value))) {
+                    value = Number(value);
+                }
+
+                if (!value) {
+                    value = true;
+                }
+
+                self.isupport[name] = value;
+            });
         }
         if (line.command === 'CAP') {
             if (line.args[1] === 'LS') {

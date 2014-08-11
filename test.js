@@ -20,7 +20,7 @@ it('should send CAP END on 903', function (done) {
         if (msg !== 'CAP END') return done(new Error('failed to reply exactly (got ' + msg + ')'));
         done();
         client.send = function () { return; };
-    }
+    };
     client.rl.emit('line', ':test.net 903 testing :SASL authentication successful');
 });
 it('should emit registered on 001', function (done) {
@@ -266,4 +266,17 @@ it('should parse names correctly and emit rpl_endofnames at the end of it', func
     client.rl.emit('line', ':test.net 353 you * #chan :@person +voicedguy anotherguy');
     client.rl.emit('line', ':test.net 353 you * #chan :otherlineguy');
     client.rl.emit('line', ':test.net 366 you #chan :End of /NAMES list.');
+});
+it('should handle basic RPL_ISUPPORT correctly', function(done) {
+    client.rl.emit('line', ':test.net 005 you CHANTYPES=# EXCEPTS MODES=4');
+    if (client.isupport.CHANTYPES !== '#') {
+        return done(new Error('failed to parse string'));
+    }
+    if (client.isupport.EXCEPTS !== true) {
+        return done(new Error('failed to parse boolean'));
+    }
+    if (client.isupport.MODES !== 4) {
+        return done(new Error('failed to parse integer'));
+    }
+    done();
 });
