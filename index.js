@@ -486,9 +486,23 @@ soontm.Client = function(options) {
          * @property {object} line - The raw line data. See the line namespace.
          */
         if (line.command === 'NICK') {
-            if (line.nick === self.options.nick) {
-                self.options.nick = line.args[0];
+            var oldNick = line.nick,
+                newNick = line.args[0];
+
+            if (oldNick === self.options.nick) {
+                self.options.nick = newNick;
             }
+
+            if (self.accounts[oldNick]) {
+                self.accounts[newNick] = self.accounts[oldNick];
+            }
+            delete self.accounts[oldNick];
+
+            if (self.awaystatus[oldNick]) {
+                self.awaystatus[newNick] = self.awaystatus[oldNick];
+            }
+            delete self.awaystatus[oldNick];
+
             self.emit('nick', line.nick, line.args[0], line);
         }
         /**
