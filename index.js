@@ -242,8 +242,8 @@ soontm.Client = function(options) {
      * Query or change the topic of a channel. Note that this function
      * does not return the topic, use the rpl_topic event to get it
      *
-     * @parwm {string} channel - The channel to query or change the topic of.
-     * @param {string=} message - The new topic. An empty string unsets the topic.
+     * @param {string} channel - The channel to query or change the topic of.
+     * @param {string=} topic - The new topic. An empty string unsets the topic.
      */
     this.topic = function (channel, topic) {
         if (topic === null || topic === undefined) {
