@@ -222,7 +222,7 @@ SoonTS6.Server = function (options) {
          */
         this.recreate = function() {
             if (!this.isService) throw new Error('Called service function on non-service IRCObj');
-            self.mkserv(this.name, this.ident, this.host, this.description);
+            return self.mkserv(this.name, this.ident, this.host, this.description);
         };
         /**
          * Forcibly changes the nick of an user.
