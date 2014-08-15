@@ -385,9 +385,11 @@ soontm.Client = function(options) {
                 if (line.args[2].indexOf('account-tag') !== -1) {
                     self.capabilities.push('account-tag');
                 }
-                if (line.args[2].indexOf('account-notify') !== -1 && line.args[2].indexOf('extended-join') !== -1) {
-                    self.capabilities.push('extended-join');
+                if (line.args[2].indexOf('account-notify') !== -1) {
                     self.capabilities.push('account-notify');
+                }
+                if (line.args[2].indexOf('extended-join') !== -1) {
+                    self.capabilities.push('extended-join');
                 }
                 if (line.args[2].indexOf('multi-prefix') !== -1) {
                     self.capabilities.push('multi-prefix');
