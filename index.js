@@ -84,12 +84,14 @@ soontm.Client = function(options) {
         this.sock = tls.connect({
             host: options.host,
             port: options.port,
+            localAddress: '::',
             rejectUnauthorized: options.sloppy === undefined ? true : !options.sloppy
         });
     } else {
         this.sock = net.connect({
             host: options.host,
-            port: options.port
+            port: options.port,
+            localAddress: '::'
         });
     }
     /**
