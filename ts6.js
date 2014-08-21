@@ -609,6 +609,19 @@ SoonTS6.Server = function (options) {
              */
             self.emit('chghost', o, oldhost, line.args[1]);
         }
+        if (line.command === 'MOTD') {
+            var from = self.objs.findByAttr('id', line.id);
+            var target = self.objs.findByAttr('id', line.args[0]);
+            /**
+             * motd event. Emitted when receiving a MOTD command.
+             *
+             * @event motd
+             * @memberof SoonTS6.Server
+             * @param {object} obj - The IRCObj that sent the MOTD command.
+             * @param {object} target - The server which is queried for the MOTD.
+             */
+            self.emit('motd', from, target);
+        }
         return;
     });
     this.send('PASS ' + options.pass + ' TS 6 :' + options.sid);
