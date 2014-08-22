@@ -514,6 +514,7 @@ SoonTS6.Server = function (options) {
              */
             var from = self.objs.findByAttr('id', line.id);
             var target = line.args[0];
+            if (target[0] === '$') return; // TODO: make this part IRCd-specific
             if (target[0] != '#') {
                 target = self.objs.findByAttr('id', target);
             }
