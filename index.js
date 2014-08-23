@@ -74,8 +74,13 @@ soontm.Client = function(options) {
         sloppy: options.sloppy || false,
         enableNames: options.enableNames || false,
         key: options.key,
-        cert: options.cert
+        cert: options.cert,
+        pfx: options.pfx
     };
+    if (options.pfx) {
+        if (options.key) options.key = undefined;
+        if (options.cert) options.cert = undefined;
+    }
     this.isupport = {};
     this.options = options;
     if (options.tls) {
@@ -87,6 +92,7 @@ soontm.Client = function(options) {
         this.sock = tls.connect({
             key: options.key === undefined ? undefined : fs.readFileSync(options.key),
             cert: options.cert === undefined ? undefined : fs.readFileSync(options.cert),
+            pfx: options.pfx === undefined ? undefined : fs.readFileSync(options.pfx),
             host: options.host,
             port: options.port,
             rejectUnauthorized: options.sloppy === undefined ? true : !options.sloppy
