@@ -81,6 +81,7 @@ soontm.Client = function(options) {
         if (options.key) options.key = undefined;
         if (options.cert) options.cert = undefined;
     }
+    this._nickSuffix = 1;
     this.isupport = {};
     this.options = options;
     if (options.tls) {
@@ -487,7 +488,8 @@ soontm.Client = function(options) {
                 line.command === '435' ||
                 line.command === '437') {
             var nicklen = self.isupport.NICKLEN || 9;
-            self.nick(self.options.nick.slice(0, nicklen - 1) + '-');
+            self.nick(self.nick().slice(0, Math.max(nicklen - 1, self._nickSuffix.toString().length)) + self._nickSuffix);
+            self._nickSuffix++;
         }
         /**
          * Nick event.
