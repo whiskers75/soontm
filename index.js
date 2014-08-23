@@ -81,6 +81,11 @@ soontm.Client = function(options) {
         if (options.key) options.key = undefined;
         if (options.cert) options.cert = undefined;
     }
+    if (options.key && options.cert || options.pfx) {
+        this._canTryEXTERNAL = true;
+    } else {
+        this._canTryEXTERNAL = false;
+    }
     this._nickSuffix = 1;
     this.isupport = {};
     this.options = options;
@@ -406,7 +411,7 @@ soontm.Client = function(options) {
                 if (line.args[2].indexOf('multi-prefix') !== -1) {
                     self.capabilities.push('multi-prefix');
                 }
-                if (options.sasl && options.password && line.args[2].indexOf('sasl') !== -1) {
+                if ((options.sasl && options.password) || (self._canTryEXTERNAL)  && line.args[2].indexOf('sasl') !== -1) {
                     if (!options.tls && !options.sloppy) { self.emit('error', new Error('Are you seriously trying to send a password over plaintext? ಠ_ಠ')); }
                     self.capabilities.push('sasl');
                 }
@@ -415,7 +420,11 @@ soontm.Client = function(options) {
             }
             if (line.args[1] === 'ACK') {
                 if (line.args[2].indexOf('sasl') !== -1) {
-                    self.send('AUTHENTICATE PLAIN');
+                    if (self._canTryEXTERNAL) {
+                        self.send('AUTHENTICATE EXTERNAL');
+                    } else {
+                        self.send('AUTHENTICATE PLAIN');
+                    }
                 }
                 if (line.args[2].indexOf('away-notify') !== -1) {
                     self.awaynotify = true;
@@ -428,8 +437,18 @@ soontm.Client = function(options) {
             }
         }
         if (line.command === '904' || line.command === '905') {
-            self.emit('error', new Error('SASL authentication failed.'));
-            self.send('CAP END');
+            if (self._canTryEXTERNAL) {
+                self._canTryEXTERNAL = false;
+                if (options.password) {
+                    self.send('AUTHENTICATE PLAIN');
+                } else {
+                    self.emit('error', new Error('SASL authentication failed.'));
+                    self.send('CAP END');
+                }
+            } else {
+                self.emit('error', new Error('SASL authentication failed.'));
+                self.send('CAP END');
+            }
         }
         if (line.command === '903') {
             if (options.debug) {
@@ -481,7 +500,11 @@ soontm.Client = function(options) {
             process.exit(1);
         }
         if (line.command === 'AUTHENTICATE' && line.args[0] === '+') {
-            self.send('AUTHENTICATE ' + new Buffer(options.user + '\u0000' + options.user + '\u0000' + options.password).toString('base64'));
+            if (self._canTryEXTERNAL) {
+                self.send('AUTHENTICATE +');
+            } else {
+                self.send('AUTHENTICATE ' + new Buffer(options.user + '\u0000' + options.user + '\u0000' + options.password).toString('base64'));
+            }
         }
         if (line.command === '432' ||
                 line.command === '433' ||
