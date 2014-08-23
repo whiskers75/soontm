@@ -95,7 +95,7 @@ soontm.Client = function(options) {
             pfx: options.pfx === undefined ? undefined : fs.readFileSync(options.pfx),
             host: options.host,
             port: options.port,
-            rejectUnauthorized: options.sloppy === undefined ? true : !options.sloppy
+            rejectUnauthorized: !options.sloppy
         });
     } else {
         this.sock = net.connect({
