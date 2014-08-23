@@ -268,7 +268,7 @@ it('should parse names correctly and emit rpl_endofnames at the end of it', func
     client.rl.emit('line', ':test.net 366 you #chan :End of /NAMES list.');
 });
 it('should handle basic RPL_ISUPPORT correctly', function(done) {
-    client.rl.emit('line', ':test.net 005 you CHANTYPES=# EXCEPTS MODES=4');
+    client.rl.emit('line', ':test.net 005 you CHANTYPES=# EXCEPTS MODES=4 :are supported by the server');
     if (client.isupport.CHANTYPES !== '#') {
         return done(new Error('failed to parse string'));
     }
