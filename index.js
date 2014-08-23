@@ -6,6 +6,7 @@ var net = require('net'),
     readline = require('readline'),
     tls = require('tls'),
     EventEmitter = require('events').EventEmitter,
+    fs = require('fs'),
     pkg = require('./package');
 
 var soontm = {
@@ -71,7 +72,9 @@ soontm.Client = function(options) {
         debug: options.debug || false,
         channels: options.channels || [],
         sloppy: options.sloppy || false,
-        enableNames: options.enableNames || false
+        enableNames: options.enableNames || false,
+        key: options.key,
+        cert: options.cert
     };
     this.isupport = {};
     this.options = options;
@@ -82,6 +85,8 @@ soontm.Client = function(options) {
          * @private
          */
         this.sock = tls.connect({
+            key: options.key === undefined ? undefined : fs.readFileSync(options.key),
+            cert: options.cert === undefined ? undefined : fs.readFileSync(options.cert),
             host: options.host,
             port: options.port,
             rejectUnauthorized: options.sloppy === undefined ? true : !options.sloppy
