@@ -78,8 +78,8 @@ soontm.Client = function(options) {
         pfx: options.pfx
     };
     if (options.pfx) {
-        if (options.key) options.key = undefined;
-        if (options.cert) options.cert = undefined;
+        if (options.key) options.key = null;
+        if (options.cert) options.cert = null;
     }
     if (options.key && options.cert || options.pfx) {
         this._canTryEXTERNAL = true;
