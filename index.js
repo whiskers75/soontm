@@ -373,7 +373,7 @@ soontm.Client = function(options) {
             }
         }
         if (line.command === '005') {
-            line.args.forEach(function (arg) {
+            line.args.slice(1, -1).forEach(function (arg) {
                 var tokens = arg.split('='),
                     name = tokens[0],
                     value = tokens.slice(1).join('=');
