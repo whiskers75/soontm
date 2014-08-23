@@ -2,12 +2,13 @@
 
 'use strict';
 
-var net = require('net'),
+var fs = require('fs'),
+    net = require('net'),
+    os = require('os'),
     readline = require('readline'),
     tls = require('tls'),
-    EventEmitter = require('events').EventEmitter,
-    fs = require('fs'),
-    pkg = require('./package');
+    pkg = require('./package'),
+    EventEmitter = require('events').EventEmitter;
 
 var soontm = {
     /**
@@ -68,7 +69,7 @@ soontm.Client = function(options) {
         sasl: options.sasl || false,
         password: options.password || '',
         tls: options.tls || false,
-        version: options.version || 'Soon™ IRC ' + pkg.version + ' for Node.js running on ' + require('os').version + ' - https://github.com/whiskers75/soontm',
+        version: options.version || 'Soon™ IRC ' + pkg.version + ' for Node.js running on ' + os.type() + ' ' + os.release() + ' - https://github.com/whiskers75/soontm',
         debug: options.debug || false,
         channels: options.channels || [],
         sloppy: options.sloppy || false,
