@@ -90,9 +90,9 @@ soontm.Client = function(options) {
          * @private
          */
         this.sock = tls.connect({
-            key: options.key === undefined ? undefined : fs.readFileSync(options.key),
-            cert: options.cert === undefined ? undefined : fs.readFileSync(options.cert),
-            pfx: options.pfx === undefined ? undefined : fs.readFileSync(options.pfx),
+            key: options.key && fs.readFileSync(options.key),
+            cert: options.cert && fs.readFileSync(options.cert),
+            pfx: options.pfx && fs.readFileSync(options.pfx),
             host: options.host,
             port: options.port,
             rejectUnauthorized: !options.sloppy
