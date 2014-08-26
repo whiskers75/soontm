@@ -364,8 +364,6 @@ soontm.Client = function(options) {
         }
         if (line.prefix.indexOf('@') === -1 && line.prefix.indexOf('!') === -1) {
             line.nick = line.prefix;
-            line.ident = line.prefix;
-            line.host = line.prefix;
         }
         if (options.debug) {
             console.log('>>> ' + rawLine);
