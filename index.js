@@ -347,9 +347,14 @@ soontm.Client = function(options) {
          * @property {status=} status - The status (away/here) of the IRC user that the command is related to. (H = here; G = gone)
          */
         if (line.prefix.indexOf('@') !== -1) {
-            line.nick = line.prefix.split('!')[0];
-            line.ident = line.prefix.split('@')[0].split('!')[1];
-            line.host = line.prefix.split('@')[1];
+            if (line.prefix.indexOf('!') !== -1) {
+                line.nick = line.prefix.split(/!(.+)?/)[0];
+                line.ident = line.prefix.split(/!(.+)?/)[1].split(/@(.+)?/)[0];
+                line.host = line.prefix.split(/!(.+)?/)[1].split(/@(.+)?/)[1];
+            } else {
+                line.nick = line.prefix.split(/@(.+)?/)[0];
+                line.host = line.prefix.split(/@(.+)?/)[1];
+            }
             if (self.accounts[line.nick] && !line.account) {
                 line.account = self.accounts[line.nick];
             }
