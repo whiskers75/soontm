@@ -345,15 +345,18 @@ soontm.Client = function(options) {
          * @property {host=} host - The host of the IRC user that the command is related to.
          * @property {account=} account - The IRC accountname of the IRC user that the command is related to.
          * @property {status=} status - The status (away/here) of the IRC user that the command is related to. (H = here; G = gone)
+         * @property {server=} server - Indicates whether message was sent by a server or not.
          */
         if (line.prefix.indexOf('@') !== -1) {
             if (line.prefix.indexOf('!') !== -1) {
                 line.nick = line.prefix.split(/!(.+)?/)[0];
                 line.ident = line.prefix.split(/!(.+)?/)[1].split(/@(.+)?/)[0];
                 line.host = line.prefix.split(/!(.+)?/)[1].split(/@(.+)?/)[1];
+                line.server = false;
             } else {
                 line.nick = line.prefix.split(/@(.+)?/)[0];
                 line.host = line.prefix.split(/@(.+)?/)[1];
+                line.server = false;
             }
             if (self.accounts[line.nick] && !line.account) {
                 line.account = self.accounts[line.nick];
@@ -362,8 +365,9 @@ soontm.Client = function(options) {
                 line.away = self.awaystatus[line.nick];
             }
         }
-        if (line.prefix.indexOf('@') === -1 && line.prefix.indexOf('!') === -1) {
-            line.nick = line.prefix;
+        if (line.prefix.indexOf('@') === -1 && line.prefix.indexOf('!') === -1 && line.prefix.indexOf('.') !== -1) {
+            line.host = line.prefix;
+            line.server = true;
         }
         if (options.debug) {
             console.log('>>> ' + rawLine);
