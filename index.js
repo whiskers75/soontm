@@ -677,7 +677,7 @@ soontm.Client = function(options) {
          *
          * @event rpl_topic
          * @memberof soontm.Client
-         * @since 0.2.0
+         * @since 0.3.3
          * @property {string} channel - The channel of which you're getting a topic for
          * @property {string} topic - The topic itself.
          */
