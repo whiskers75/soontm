@@ -692,9 +692,10 @@ soontm.Client = function(options) {
          * @property {string} nick - The nickname that changed the topic.
          * @property {string} channel - The channel where the topic is changed.
          * @property {string} topic - The topic itself.
+         * @property {object} line - The raw line data. See the line namespace.
          */
         if (line.command === 'TOPIC') {
-            self.emit('topic', line.nick, line.args[0], line.args[1]);
+            self.emit('topic', line.nick, line.args[0], line.args[1], line);
         }
         /**
          * WALLOPS - emitted when a wallops is received.
